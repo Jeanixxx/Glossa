@@ -1,4 +1,4 @@
-import { copyFile, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const root = resolve(process.cwd(), '..');
@@ -11,5 +11,4 @@ if (!html.includes(bridgeTag)) {
   html = html.replace('</body>', `  ${bridgeTag}\n</body>`);
 }
 await writeFile(targetHtml, html, 'utf8');
-await copyFile(resolve(process.cwd(), 'native-bridge.js'), resolve(process.cwd(), 'native-bridge.js'));
 console.log('Prepared Glóssa web assets for Capacitor.');
