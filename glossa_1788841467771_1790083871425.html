@@ -1,0 +1,3004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#e8eef5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Glóssa — Lectura inmersiva con seguimiento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #e8eef5;
+      --bg-grad: radial-gradient(ellipse at 20% 0%, #d4e4f7 0%, transparent 50%),
+                 radial-gradient(ellipse at 80% 100%, #e8d5f0 0%, transparent 45%),
+                 linear-gradient(160deg, #eef2f7 0%, #e4ebf4 50%, #f0e9f2 100%);
+      --text: #1c2430;
+      --muted: #6b7a8f;
+      --accent: #3d6b8c;
+      --accent-hover: #2f5570;
+      --card: rgba(255, 255, 255, 0.55);
+      --card-solid: rgba(255, 255, 255, 0.72);
+      --border: rgba(255, 255, 255, 0.45);
+      --border-soft: rgba(60, 90, 120, 0.12);
+      --highlight: rgba(61, 107, 140, 0.1);
+      --scaffold: #c4784a;
+      --scaffold-bg: rgba(196, 120, 74, 0.12);
+      --known: #3d8b6e;
+      --learning: #c4784a;
+      --glass: blur(18px) saturate(1.35);
+      --shadow: 0 8px 32px rgba(45, 70, 100, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+      --radius: 18px;
+      --font-size: 18px;
+      --line-height: 1.72;
+    }
+    [data-theme="sepia"] {
+      --bg: #f0e6d4;
+      --bg-grad: radial-gradient(ellipse at 30% 10%, #f5e6c8 0%, transparent 50%),
+                 linear-gradient(165deg, #f3ead8 0%, #ebe0cc 100%);
+      --text: #3a2e1c; --muted: #8a7a62;
+      --accent: #8b6914; --accent-hover: #6e5210;
+      --card: rgba(250, 244, 230, 0.6); --card-solid: rgba(250, 244, 230, 0.78);
+      --border: rgba(255, 250, 235, 0.5); --border-soft: rgba(120, 90, 40, 0.12);
+      --highlight: rgba(180, 140, 60, 0.12);
+      --scaffold: #a0522d; --scaffold-bg: rgba(160, 82, 45, 0.12);
+      --known: #5a7a4a; --learning: #a0522d;
+      --shadow: 0 8px 32px rgba(90, 70, 40, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    [data-theme="dark"] {
+      --bg: #0f1218;
+      --bg-grad: radial-gradient(ellipse at 15% 0%, #1a2840 0%, transparent 50%),
+                 radial-gradient(ellipse at 85% 90%, #2a1a30 0%, transparent 45%),
+                 linear-gradient(165deg, #12161e 0%, #0e1118 100%);
+      --text: #e6eaf0; --muted: #8b95a8;
+      --accent: #6ba3c7; --accent-hover: #8bb8d4;
+      --card: rgba(30, 36, 48, 0.55); --card-solid: rgba(28, 34, 46, 0.75);
+      --border: rgba(255, 255, 255, 0.08); --border-soft: rgba(255, 255, 255, 0.06);
+      --highlight: rgba(107, 163, 199, 0.12);
+      --scaffold: #e09a6a; --scaffold-bg: rgba(224, 154, 106, 0.15);
+      --known: #5cb88a; --learning: #e09a6a;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      background: var(--bg);
+      background-image: var(--bg-grad);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100dvh; transition: background 0.35s, color 0.35s; overflow-x: hidden;
+    }
+    .glass {
+      background: var(--card);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .screen { display: none; min-height: 100dvh; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ===== ONBOARDING ===== */
+    .onboard { justify-content: flex-start; align-items: center; padding: 2rem 1.4rem 3rem; overflow-y: auto; }
+    .logo { font-family: 'Literata', serif; font-size: 2.6rem; font-weight: 700; letter-spacing: -0.03em; color: var(--accent); margin-bottom: 0.25rem; }
+    .tagline { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; text-align: center; max-width: 380px; line-height: 1.45; }
+    .step-indicator { display: flex; gap: 0.45rem; margin-bottom: 1.6rem; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.25s; }
+    .step-dot.active { background: var(--accent); width: 22px; border-radius: 4px; }
+    .step-title { font-family: 'Literata', serif; font-size: 1.4rem; font-weight: 600; margin-bottom: 0.45rem; text-align: center; }
+    .step-sub { color: var(--muted); font-size: 0.93rem; text-align: center; margin-bottom: 1.6rem; max-width: 360px; line-height: 1.4; }
+
+    .profiles { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; max-width: 420px; }
+    .profile-card {
+      background: var(--card); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.1rem 1.25rem; cursor: pointer; transition: all 0.25s; box-shadow: var(--shadow); position: relative;
+    }
+    .profile-card:hover, .profile-card.selected { border-color: var(--accent); transform: translateY(-2px); }
+    .profile-card.selected::after {
+      content: "✓"; position: absolute; top: 1rem; right: 1.1rem; width: 24px; height: 24px;
+      background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600;
+    }
+    .profile-badge { display: inline-block; font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: var(--highlight); color: var(--accent); padding: 0.16rem 0.48rem; border-radius: 5px; margin-bottom: 0.35rem; }
+    .profile-card h3 { font-family: 'Literata', serif; font-size: 1.08rem; margin-bottom: 0.25rem; }
+    .profile-card p { font-size: 0.86rem; color: var(--muted); line-height: 1.4; }
+
+    .interests-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem; width: 100%; max-width: 420px; }
+    .interest-chip {
+      background: var(--card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: 50px;
+      padding: 0.72rem 0.9rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.18s; text-align: center; user-select: none;
+    }
+    .interest-chip:hover { border-color: var(--accent); }
+    .interest-chip.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+    .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; width: 100%; max-width: 420px; }
+    .level-card {
+      background: var(--card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.95rem; cursor: pointer; transition: all 0.18s; text-align: center;
+    }
+    .level-card:hover, .level-card.selected { border-color: var(--accent); background: var(--highlight); }
+    .level-card.selected { box-shadow: 0 0 0 2px var(--accent); }
+    .level-card strong { display: block; font-size: 1.05rem; margin-bottom: 0.15rem; }
+    .level-card span { font-size: 0.78rem; color: var(--muted); }
+
+    .btn-primary {
+      margin-top: 1.6rem; background: var(--accent); color: white; border: none; border-radius: 50px;
+      padding: 0.92rem 2rem; font-size: 1.02rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      width: 100%; max-width: 420px;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-ghost { background: transparent; border: none; color: var(--muted); font-size: 0.88rem; margin-top: 0.8rem; cursor: pointer; padding: 0.35rem; }
+
+    /* ===== LIBRARY / FEED ===== */
+    #screen-library header, #screen-boards header, #screen-vocab header, #screen-stats header {
+      padding: 1rem 1.3rem 0.7rem; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); background: var(--card-solid);
+      backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .library-title { font-family: 'Literata', serif; font-size: 1.25rem; font-weight: 600; }
+    .header-actions { display: flex; gap: 0.45rem; align-items: center; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg);
+      display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.2s;
+    }
+    .icon-btn:hover { background: var(--highlight); }
+    .profile-pill { font-size: 0.7rem; font-weight: 600; background: var(--accent); color: white; padding: 0.3rem 0.65rem; border-radius: 20px; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+       background: var(--card-solid); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      border-top: 1px solid var(--border);
+       display: flex; justify-content: space-around; padding: 0.5rem 0 calc(0.7rem + env(safe-area-inset-bottom)); z-index: 40;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem; font-size: 0.68rem;
+      color: var(--muted); cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 10px; transition: color 0.2s;
+    }
+    .nav-item.active { color: var(--accent); font-weight: 600; }
+    .nav-item span { font-size: 1.2rem; }
+
+    .library-content { padding: 1.2rem 1.3rem 5.5rem; flex: 1; overflow-y: auto; }
+    .section-label { font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.8rem; margin-top: 0.4rem; }
+
+    .user-summary {
+      background: var(--highlight); border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.3rem; font-size: 0.88rem; line-height: 1.45;
+    }
+    .user-summary strong { color: var(--accent); }
+    .stats-row { display: flex; gap: 0.7rem; margin-top: 0.6rem; }
+    .stat-pill {
+      flex: 1; background: var(--card); border-radius: 10px; padding: 0.55rem 0.6rem; text-align: center; border: 1px solid var(--border);
+    }
+    .stat-pill .num { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+    .stat-pill .lbl { font-size: 0.68rem; color: var(--muted); }
+
+    .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.8rem; }
+    .book-card {
+      background: var(--card); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      cursor: pointer; transition: transform 0.22s, box-shadow 0.22s; box-shadow: var(--shadow);
+    }
+    .book-card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(45, 70, 100, 0.12); }
+    .book-cover {
+      height: 120px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; position: relative; color: white;
+    }
+    .book-cover.level-1 { background: linear-gradient(135deg, #1a5c4a, #2d7a66); }
+    .book-cover.level-2 { background: linear-gradient(135deg, #2a5a7c, #3d7a9c); }
+    .book-cover.level-3 { background: linear-gradient(135deg, #7c4a2a, #9c6a4a); }
+    .book-cover.level-4 { background: linear-gradient(135deg, #5a3a7c, #7a5a9c); }
+    .book-cover.level-5 { background: linear-gradient(135deg, #7c2a3a, #9c4a5a); }
+    .level-tag { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.35); color: white; font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .book-info { padding: 0.7rem 0.8rem 0.85rem; }
+    .book-info h4 { font-family: 'Literata', serif; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.15rem; line-height: 1.3; }
+    .book-meta { font-size: 0.7rem; color: var(--muted); }
+    .book-download {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.45rem;
+      padding: 0.55rem 0.8rem 0.7rem; border-top: 1px solid var(--border);
+    }
+    .book-download button {
+      flex: 1; min-width: 0; padding: 0.42rem 0.55rem; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      font-size: 0.72rem; font-weight: 600; cursor: pointer;
+    }
+    .book-download button:hover { border-color: var(--accent); background: var(--highlight); }
+    .book-download button:disabled { opacity: 0.65; cursor: wait; }
+    .book-download .download-status {
+      font-size: 0.68rem; color: var(--muted); white-space: nowrap;
+    }
+    .book-download.ready .download-status { color: var(--known); font-weight: 600; }
+    .open-library {
+      margin-top: 1.2rem; padding: 1rem; border-radius: 14px;
+    }
+    .open-library p {
+      color: var(--muted); font-size: 0.82rem; line-height: 1.4; margin-bottom: 0.75rem;
+    }
+    .open-library-controls {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 0.6rem;
+    }
+    .open-library-controls input, .open-library-controls select {
+      min-width: 0; padding: 0.55rem 0.65rem; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; font-size: 0.82rem;
+    }
+    .open-library-controls input { grid-column: 1 / -1; }
+    .open-library-controls button {
+      grid-column: 1 / -1; padding: 0.55rem 0.7rem; border: 0; border-radius: 8px;
+      background: var(--accent); color: white; font-weight: 600; cursor: pointer;
+    }
+    .open-library-controls button:disabled { opacity: 0.55; cursor: wait; }
+    .open-library-status { color: var(--muted); font-size: 0.76rem; min-height: 1.1rem; margin-bottom: 0.45rem; }
+    .open-result {
+      display: flex; justify-content: space-between; align-items: center; gap: 0.7rem;
+      padding: 0.65rem 0; border-top: 1px solid var(--border); font-size: 0.82rem;
+    }
+    .open-result strong { display: block; font-family: 'Literata', serif; line-height: 1.25; }
+    .open-result small { color: var(--muted); display: block; margin-top: 0.18rem; }
+    .open-result button {
+      flex: 0 0 auto; padding: 0.4rem 0.6rem; border: 1px solid var(--border);
+      border-radius: 7px; background: var(--bg); color: var(--text); cursor: pointer; font-size: 0.72rem; font-weight: 600;
+    }
+    .open-result button:hover { border-color: var(--accent); background: var(--highlight); }
+
+    /* Boards */
+    .board-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem;
+      margin-bottom: 0.8rem; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
+    }
+    .board-card:hover { border-color: var(--accent); }
+    .board-card h4 { font-family: 'Literata', serif; font-size: 1rem; margin-bottom: 0.2rem; }
+    .board-card .count { font-size: 0.78rem; color: var(--muted); }
+    .board-actions { display: flex; gap: 0.4rem; }
+
+    /* Vocab / Flashcards */
+    .vocab-filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-chip {
+      padding: 0.4rem 0.85rem; border-radius: 50px; border: 1px solid var(--border); font-size: 0.8rem;
+      cursor: pointer; background: var(--card); transition: all 0.15s;
+    }
+    .filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .vocab-item {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem;
+      margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    .vocab-item .word { font-family: 'Literata', serif; font-weight: 600; font-size: 1.05rem; }
+    .vocab-item .trans { font-size: 0.85rem; color: var(--muted); }
+    .status-badge {
+      font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 6px; text-transform: uppercase;
+    }
+    .status-badge.learning { background: #fdf0e6; color: #c45c26; }
+    .status-badge.known { background: #e8f2ee; color: #1a5c4a; }
+    .status-badge.new { background: #f0f0f0; color: #666; }
+
+    /* Flashcard review */
+    .flashcard {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem 1.5rem;
+      text-align: center; min-height: 220px; display: flex; flex-direction: column; justify-content: center;
+      box-shadow: var(--shadow); margin-bottom: 1.2rem; cursor: pointer;
+    }
+    .flashcard .front-word { font-family: 'Literata', serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .flashcard .context { font-size: 0.9rem; color: var(--muted); font-style: italic; margin-top: 0.8rem; line-height: 1.4; }
+    .flashcard .back { display: none; }
+    .flashcard.flipped .front { display: none; }
+    .flashcard.flipped .back { display: block; }
+    .flash-actions { display: flex; gap: 0.7rem; justify-content: center; }
+    .flash-btn {
+      padding: 0.7rem 1.4rem; border-radius: 50px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+    }
+    .flash-btn.again { background: #fde8e8; color: #c0392b; }
+    .flash-btn.good { background: var(--highlight); color: var(--accent); }
+    .flash-btn.easy { background: var(--accent); color: white; }
+
+    /* ===== READER ===== */
+    #screen-reader { background: var(--bg); }
+    .reader-header {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border); background: var(--card-solid);
+      backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      position: sticky; top: 0; z-index: 20;
+    }
+    .back-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text); padding: 0.25rem 0.4rem; }
+    .reader-progress { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+    .reader-controls { display: flex; gap: 0.3rem; }
+
+    .reader-body { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .page-container { flex: 1; display: flex; align-items: stretch; position: relative; overflow: hidden; }
+    .page-nav {
+      width: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      opacity: 0.18; transition: opacity 0.2s; user-select: none; font-size: 1.5rem; color: var(--text);
+    }
+    .page-nav:hover { opacity: 0.55; }
+    .page-nav.disabled { opacity: 0.06; pointer-events: none; }
+
+    .page-content {
+      flex: 1; padding: 1.6rem 0.35rem 8.5rem; max-width: 680px; margin: 0 auto; overflow-y: auto;
+      font-family: 'Literata', Georgia, serif; font-size: var(--font-size); line-height: var(--line-height); color: var(--text);
+    }
+    .page-content p { margin-bottom: 1em; text-align: justify; hyphens: auto; }
+    .page-content .title { font-size: 1.35em; font-weight: 700; margin-bottom: 0.45em; line-height: 1.3; }
+    .page-content .source { font-size: 0.72em; color: var(--muted); margin-bottom: 1.4em; font-family: 'Source Sans 3', sans-serif; }
+
+    /* Word states */
+    /* Español de apoyo en el flujo (negro, punteado) */
+    .scaffold-es {
+      color: var(--text);
+      font-weight: 500;
+      border-bottom: 1px dotted color-mix(in srgb, var(--muted) 55%, transparent);
+      cursor: pointer;
+      padding: 0 1px;
+    }
+    .scaffold-es:hover { background: var(--highlight); border-radius: 3px; }
+    /* Idioma meta FR/EN (naranja) — tappable */
+    .scaffold {
+      color: var(--scaffold);
+      background: var(--scaffold-bg);
+      border-radius: 4px;
+      padding: 0 3px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-weight: 600;
+      border-bottom: 1.5px solid color-mix(in srgb, var(--scaffold) 40%, transparent);
+    }
+    .scaffold:hover { background: color-mix(in srgb, var(--scaffold) 22%, transparent); }
+    .scaffold.known-word {
+      color: inherit; background: transparent; font-weight: inherit;
+      border-bottom: 1.5px solid color-mix(in srgb, var(--known) 40%, transparent);
+    }
+    .scaffold.learning-word {
+      color: var(--scaffold); background: color-mix(in srgb, var(--scaffold) 10%, transparent);
+      border-radius: 3px; font-weight: 600;
+    }
+
+    /* Parallel mode */
+    .parallel-box {
+      display: none; background: var(--highlight); border-left: 3px solid var(--accent); padding: 0.9rem 1rem;
+      margin: 1rem 0; border-radius: 0 10px 10px 0; font-size: 0.92em; line-height: 1.55; font-family: 'Source Sans 3', sans-serif;
+    }
+    .parallel-box.visible { display: block; }
+    .parallel-box .label { font-size: 0.72rem; font-weight: 600; color: var(--accent); margin-bottom: 0.35rem; text-transform: uppercase; }
+    .hybrid-sentence { display: inline; }
+    .hybrid-block { display: inline; }
+    .hybrid-block.target-block {
+      color: var(--scaffold); background: var(--scaffold-bg); border-radius: 4px;
+      padding: 0 3px; cursor: pointer; font-weight: 600;
+      border-bottom: 1.5px solid color-mix(in srgb, var(--scaffold) 40%, transparent);
+    }
+    .hybrid-block.target-block:hover { background: color-mix(in srgb, var(--scaffold) 22%, transparent); }
+    .hybrid-block.bridge-block { color: inherit; }
+    .engine-note {
+      display: inline-block; margin-left: 0.35rem; padding: 0.12rem 0.4rem;
+      border-radius: 5px; background: var(--highlight); color: var(--accent);
+      font: 600 0.68rem/1.2 'Source Sans 3', sans-serif; vertical-align: middle;
+    }
+    .translation-placeholder {
+      display: block; padding: 2.5rem 1rem; text-align: center;
+      color: var(--muted); font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem;
+    }
+
+    /* X-Ray improved */
+    .xray-popup {
+      position: fixed; z-index: 80;
+      background: var(--card-solid); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      border: 1px solid var(--border); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 1rem 1.1rem; min-width: 260px; max-width: 310px;
+      display: none; animation: popupIn 0.18s ease;
+    }
+    .xray-popup.visible { display: block; }
+    @keyframes popupIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .xray-word { font-family: 'Literata', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--accent); }
+    .xray-row { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 0.28rem; }
+    .xray-label { color: var(--muted); font-size: 0.74rem; }
+    .xray-actions { display: flex; gap: 0.4rem; margin-top: 0.75rem; flex-wrap: wrap; }
+    .xray-btn {
+      font-size: 0.75rem; font-weight: 600; padding: 0.35rem 0.7rem; border-radius: 50px; border: 1px solid var(--border);
+      background: var(--bg); cursor: pointer; transition: all 0.15s;
+    }
+    .xray-btn:hover { border-color: var(--accent); }
+    .xray-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .xray-freq { margin-top: 0.55rem; font-size: 0.78rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 0.45rem; }
+    .freq-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.25rem; overflow: hidden; }
+    .freq-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+    /* Reader footer */
+    .reader-footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card-solid); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      border-top: 1px solid var(--border);
+       padding: 0.55rem 1rem calc(0.9rem + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 0.4rem; z-index: 30;
+      box-shadow: 0 -8px 28px rgba(0,0,0,0.06);
+    }
+    .ratio-bar-container { display: flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: var(--muted); }
+    .ratio-bar { flex: 1; height: 8px; background: var(--border-soft); border-radius: 6px; overflow: hidden; display: flex; }
+    .ratio-fr { background: linear-gradient(90deg, #3d6b8c, #5a8fb0); transition: width 0.35s ease; }
+    .ratio-en { background: linear-gradient(90deg, #5a7a9c, #7a9abc); transition: width 0.35s ease; }
+    .ratio-es { background: linear-gradient(90deg, #c4784a, #d4926a); transition: width 0.35s ease; }
+    .ratio-step {
+      width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--card); backdrop-filter: blur(8px); color: var(--text); font-size: 1.15rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;
+      transition: border-color 0.15s, background 0.15s, transform 0.12s;
+    }
+    .ratio-step:hover { border-color: var(--accent); background: var(--highlight); transform: scale(1.05); }
+    .ratio-hint { font-size: 0.65rem; font-weight: 600; min-width: 1.6rem; opacity: 0.85; }
+    .ratio-ends { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--muted); padding: 0 2.5rem; margin-top: -0.15rem; }
+    .page-progress-track {
+      height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 0.35rem; overflow: hidden;
+    }
+    .page-progress-fill {
+      height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease;
+    }
+    .footer-actions { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; }
+    .end-card {
+      margin-top: 1.5rem; padding: 1.4rem 1.2rem; background: var(--highlight);
+      border-radius: 14px; border: 1px solid var(--border); text-align: center;
+    }
+    .end-card h3 { font-family: 'Literata', serif; font-size: 1.2rem; margin-bottom: 0.4rem; }
+    .end-card p { font-size: 0.9rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.45; }
+    .end-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .end-btn {
+      padding: 0.65rem 1.1rem; border-radius: 50px; border: none; font-weight: 600;
+      font-size: 0.88rem; cursor: pointer;
+    }
+    .end-btn.primary { background: var(--accent); color: white; }
+    .end-btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .more-like-row { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.8rem; text-align: left; }
+    .more-like-item {
+      padding: 0.65rem 0.85rem; background: var(--card); border-radius: 10px;
+      border: 1px solid var(--border); cursor: pointer; font-size: 0.88rem;
+    }
+    .more-like-item:hover { border-color: var(--accent); }
+    .more-like-item strong { display: block; font-family: 'Literata', serif; margin-bottom: 0.15rem; }
+    .more-like-item span { font-size: 0.75rem; color: var(--muted); }
+    .theme-btns { display: flex; gap: 0.25rem; }
+    .theme-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+    .theme-btn.active { border-color: var(--accent); }
+    .theme-btn[data-t="light"] { background: #f7f4ef; }
+    .theme-btn[data-t="sepia"] { background: #f3ebd6; }
+    .theme-btn[data-t="dark"] { background: #161618; }
+    .font-size-ctrl { display: flex; gap: 0.2rem; }
+    .font-size-ctrl button {
+      width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg);
+      cursor: pointer; font-size: 0.9rem; color: var(--text);
+    }
+    .reader-extra-btns { display: flex; gap: 0.35rem; }
+    .extra-btn {
+      font-size: 0.72rem; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 50px;
+      border: 1px solid var(--border); background: var(--bg); cursor: pointer; color: var(--text);
+    }
+    .extra-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 64px; left: 50%; transform: translateX(-50%) translateY(-16px);
+      background: var(--accent); color: white; padding: 0.6rem 1.15rem; border-radius: 50px;
+      font-size: 0.86rem; font-weight: 500; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 100;
+      white-space: nowrap; max-width: 90vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Settings */
+    .settings-panel {
+      position: fixed; top: 0; right: -320px; width: 300px; height: 100%;
+      background: var(--card-solid); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+      border-left: 1px solid var(--border); z-index: 60; padding: 1.3rem; transition: right 0.3s ease;
+      box-shadow: -12px 0 40px rgba(0,0,0,0.12); overflow-y: auto;
+    }
+    .settings-panel.open { right: 0; }
+    .settings-panel h3 { font-family: 'Literata', serif; margin-bottom: 1rem; }
+    .setting-group { margin-bottom: 1.2rem; }
+    .setting-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 55; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.visible { opacity: 1; pointer-events: auto; }
+
+    /* More like this */
+    .more-like {
+      margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid var(--border);
+    }
+    .more-like h4 { font-family: 'Literata', serif; font-size: 1rem; margin-bottom: 0.8rem; }
+
+    @media (max-width: 600px) {
+      .page-nav { width: 28px; font-size: 1.2rem; }
+      .page-content { padding: 1.2rem 0.1rem 9rem; }
+      .book-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ===== Glass + dark/light consistency ===== */
+    .book-card, .board-card, .vocab-item,
+    .flashcard, .stat-pill, .end-card, .more-like-item,
+    .profile-card, .level-card, .interest-chip, .filter-chip {
+      background: var(--card) !important;
+      backdrop-filter: blur(16px) saturate(1.25);
+      -webkit-backdrop-filter: blur(16px) saturate(1.25);
+      border-color: var(--border) !important;
+      box-shadow: var(--shadow);
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .user-summary {
+      background: var(--highlight) !important;
+      border-left: 3px solid var(--accent);
+      backdrop-filter: blur(12px);
+    }
+    #screen-library header, #screen-boards header, #screen-vocab header, #screen-stats header,
+    .reader-header, .reader-footer, .bottom-nav, .settings-panel {
+      background: var(--card-solid) !important;
+      backdrop-filter: blur(18px) saturate(1.3);
+      -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    }
+    .page-content {
+      background: rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-radius: 14px;
+      padding: 1.6rem 1rem 8.5rem;
+    }
+    [data-theme="dark"] .page-content {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    [data-theme="sepia"] .page-content {
+      background: rgba(255, 248, 230, 0.35);
+    }
+    .board-card, .vocab-item {
+      border-left: 3px solid transparent;
+    }
+    .board-card:hover, .vocab-item:hover {
+      border-left-color: var(--accent);
+      background: var(--highlight) !important;
+    }
+    [data-theme="dark"] #font-select {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    input[type="range"] { accent-color: var(--accent); width: 100%; }
+    [data-theme="dark"] ::-webkit-scrollbar { width: 6px; background: transparent; }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15); border-radius: 8px;
+    }
+    [data-theme="dark"] ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); }
+  </style>
+</head>
+<body data-theme="light">
+
+  <!-- ONBOARDING -->
+  <div id="screen-welcome" class="screen active onboard">
+    <div class="logo">Glóssa</div>
+    <p class="tagline">Lee de forma inmersiva.<br>El seguimiento se adapta a ti.</p>
+    <div class="step-indicator"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+    <div class="step-title">Bienvenido</div>
+    <p class="step-sub">Glóssa convierte cualquier texto en una experiencia de lectura bilingüe personalizada.</p>
+    <button class="btn-primary" onclick="goToStep(1)">Empezar</button>
+  </div>
+
+  <div id="screen-profile" class="screen onboard">
+    <div class="logo" style="font-size:1.5rem;margin-bottom:0.7rem;">Glóssa</div>
+    <div class="step-indicator"><div class="step-dot"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+    <div class="step-title">¿Cómo quieres leer?</div>
+    <p class="step-sub">Elige el modo de exposición.</p>
+    <div class="profiles">
+      <div class="profile-card" data-profile="A" onclick="selectProfile(this)">
+        <span class="profile-badge">Perfil A</span>
+        <h3>Francés puro</h3>
+        <p>Texto principal en francés. Seguimiento en español.</p>
+      </div>
+      <div class="profile-card" data-profile="B" onclick="selectProfile(this)">
+        <span class="profile-badge">Perfil B</span>
+        <h3>Inglés puro</h3>
+        <p>Texto principal en inglés. Seguimiento en español.</p>
+      </div>
+      <div class="profile-card" data-profile="C" onclick="selectProfile(this)">
+        <span class="profile-badge">Perfil C · Dual</span>
+        <h3>Bilingüe progresivo</h3>
+        <p>Francés primario + inglés como puente.</p>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-profile" disabled onclick="goToStep(2)">Continuar</button>
+    <button class="btn-ghost" onclick="goToStep(0)">← Atrás</button>
+  </div>
+
+  <div id="screen-interests" class="screen onboard">
+    <div class="logo" style="font-size:1.5rem;margin-bottom:0.7rem;">Glóssa</div>
+    <div class="step-indicator"><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+    <div class="step-title">¿Qué te interesa?</div>
+    <p class="step-sub">Selecciona al menos 2. Crearemos tu feed personalizado.</p>
+    <div class="interests-grid" id="interests-grid"></div>
+    <button class="btn-primary" id="btn-interests" disabled onclick="goToStep(3)">Continuar</button>
+    <button class="btn-ghost" onclick="goToStep(1)">← Atrás</button>
+  </div>
+
+  <div id="screen-level" class="screen onboard">
+    <div class="logo" style="font-size:1.5rem;margin-bottom:0.7rem;">Glóssa</div>
+    <div class="step-indicator"><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot active"></div></div>
+    <div class="step-title">¿Cuál es tu nivel?</div>
+    <p class="step-sub">Define el ratio inicial de seguimiento.</p>
+    <div class="level-grid">
+       <div class="level-card" data-level="A2" data-ratio="20" onclick="selectLevel(this)"><strong>A2</strong><span>Elemental<br>Mucho apoyo</span></div>
+      <div class="level-card" data-level="B1" data-ratio="40" onclick="selectLevel(this)"><strong>B1</strong><span>Intermedio<br>Apoyo moderado</span></div>
+       <div class="level-card" data-level="B2" data-ratio="60" onclick="selectLevel(this)"><strong>B2</strong><span>Intermedio alto<br>Poco apoyo</span></div>
+       <div class="level-card" data-level="C1" data-ratio="80" onclick="selectLevel(this)"><strong>C1</strong><span>Avanzado<br>Mínimo apoyo</span></div>
+    </div>
+    <button class="btn-primary" id="btn-level" disabled onclick="finishOnboarding()">Crear mi Glóssa</button>
+    <button class="btn-ghost" onclick="goToStep(2)">← Atrás</button>
+  </div>
+
+  <!-- LIBRARY / FEED -->
+  <div id="screen-library" class="screen">
+    <header>
+      <div class="library-title">Glóssa</div>
+      <div class="header-actions">
+        <span class="profile-pill" id="current-profile-pill">—</span>
+        <button class="icon-btn" onclick="openSettings()">⚙</button>
+      </div>
+    </header>
+    <div class="library-content">
+      <div class="user-summary" id="user-summary"></div>
+      <div class="section-label">Para ti</div>
+      <div class="book-grid" id="book-grid"></div>
+      <div style="background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:1rem;text-align:center;color:var(--muted);font-size:0.86rem;margin-top:1rem;">
+        <button class="btn-ghost" onclick="loadDemoText()">Ver texto de demostración</button>
+      </div>
+      <div class="open-library glass" id="open-library-panel">
+        <div class="section-label" style="margin-top:0;">Biblioteca abierta</div>
+        <p>Busca lecturas breves o libros públicos. Glóssa descargará el texto y lo preparará con el motor de bloques sintácticos.</p>
+        <div class="open-library-controls">
+          <select id="open-source">
+            <option value="wikipedia">Wikipedia · breve</option>
+            <option value="gutenberg">Gutendex · libros</option>
+            <option value="wikisource">Wikisource · clásicos</option>
+          </select>
+          <select id="open-lang">
+            <option value="fr">Francés</option>
+            <option value="en">Inglés</option>
+            <option value="es">Español</option>
+          </select>
+          <input id="open-query" type="search" placeholder="Tema, autor o título" onkeydown="if(event.key==='Enter') searchOpenLibrary()">
+          <button id="open-search-btn" onclick="searchOpenLibrary()">Buscar lecturas</button>
+        </div>
+        <div class="open-library-status" id="open-library-status"></div>
+        <div id="open-library-results"></div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="showMain('library')"><span>📖</span>Feed</div>
+      <div class="nav-item" onclick="showMain('boards')"><span>📌</span>Tableros</div>
+      <div class="nav-item" onclick="showMain('vocab')"><span>🔤</span>Vocabulario</div>
+      <div class="nav-item" onclick="showMain('stats')"><span>📊</span>Progreso</div>
+    </div>
+  </div>
+
+  <!-- BOARDS -->
+  <div id="screen-boards" class="screen">
+    <header>
+      <div class="library-title">Mis tableros</div>
+      <button class="icon-btn" onclick="createBoard()">＋</button>
+    </header>
+    <div class="library-content" id="boards-list"></div>
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="showMain('library')"><span>📖</span>Feed</div>
+      <div class="nav-item active" onclick="showMain('boards')"><span>📌</span>Tableros</div>
+      <div class="nav-item" onclick="showMain('vocab')"><span>🔤</span>Vocabulario</div>
+      <div class="nav-item" onclick="showMain('stats')"><span>📊</span>Progreso</div>
+    </div>
+  </div>
+
+  <!-- VOCAB / FLASHCARDS -->
+  <div id="screen-vocab" class="screen">
+    <header>
+      <div class="library-title">Vocabulario</div>
+      <button class="icon-btn" onclick="startReview()" title="Repasar">🃏</button>
+    </header>
+    <div class="library-content">
+      <div class="vocab-filters">
+        <div class="filter-chip active" data-f="all" onclick="filterVocab('all')">Todos</div>
+        <div class="filter-chip" data-f="learning" onclick="filterVocab('learning')">Aprendiendo</div>
+        <div class="filter-chip" data-f="known" onclick="filterVocab('known')">Conocidas</div>
+      </div>
+      <div id="vocab-list"></div>
+      <div id="flashcard-area" style="display:none;">
+        <div class="flashcard" id="flashcard" onclick="flipCard()">
+          <div class="front">
+            <div class="front-word" id="fc-word"></div>
+            <div class="context" id="fc-context"></div>
+            <div style="margin-top:1rem;font-size:0.8rem;color:var(--muted);">Toca para revelar</div>
+          </div>
+          <div class="back">
+            <div class="front-word" id="fc-trans"></div>
+            <div class="context" id="fc-context-back"></div>
+          </div>
+        </div>
+        <div class="flash-actions">
+          <button class="flash-btn again" onclick="reviewCard('again')">Otra vez</button>
+          <button class="flash-btn good" onclick="reviewCard('good')">Bien</button>
+          <button class="flash-btn easy" onclick="reviewCard('easy')">Fácil</button>
+        </div>
+        <button class="btn-ghost" style="width:100%;margin-top:1rem;" onclick="stopReview()">Salir del repaso</button>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="showMain('library')"><span>📖</span>Feed</div>
+      <div class="nav-item" onclick="showMain('boards')"><span>📌</span>Tableros</div>
+      <div class="nav-item active" onclick="showMain('vocab')"><span>🔤</span>Vocabulario</div>
+      <div class="nav-item" onclick="showMain('stats')"><span>📊</span>Progreso</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="screen-stats" class="screen">
+    <header>
+      <div class="library-title">Progreso</div>
+    </header>
+    <div class="library-content" id="stats-content"></div>
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="showMain('library')"><span>📖</span>Feed</div>
+      <div class="nav-item" onclick="showMain('boards')"><span>📌</span>Tableros</div>
+      <div class="nav-item" onclick="showMain('vocab')"><span>🔤</span>Vocabulario</div>
+      <div class="nav-item active" onclick="showMain('stats')"><span>📊</span>Progreso</div>
+    </div>
+  </div>
+
+  <!-- READER -->
+  <div id="screen-reader" class="screen">
+    <div class="reader-header">
+      <button class="back-btn" onclick="goToLibrary()">←</button>
+      <div class="reader-progress" id="page-indicator">1 / 1</div>
+      <div class="reader-controls">
+        <button class="icon-btn" onclick="saveToBoard()" title="Guardar en tablero">📌</button>
+        <button class="icon-btn" onclick="openSettings()">Aa</button>
+      </div>
+    </div>
+    <div class="reader-body">
+      <div class="page-container">
+        <div class="page-nav" id="prev-page" onclick="changePage(-1)">‹</div>
+        <div class="page-content" id="page-content"></div>
+        <div class="page-nav" id="next-page" onclick="changePage(1)">›</div>
+      </div>
+    </div>
+    <div class="reader-footer">
+      <div class="page-progress-track" id="page-progress-track" title="Progreso de lectura">
+        <div class="page-progress-fill" id="page-progress-fill" style="width:0%"></div>
+      </div>
+      <div class="ratio-bar-container">
+        <button class="ratio-step" onclick="adjustRatio(-10)" title="Más español (hasta 100% ES)">−</button>
+        <span class="ratio-hint">ES</span>
+        <div class="ratio-bar" title="Desliza mentalmente: ES ← → idioma que aprendes">
+          <div class="ratio-fr" id="bar-fr" style="width:40%"></div>
+          <div class="ratio-en" id="bar-en" style="width:0%"></div>
+          <div class="ratio-es" id="bar-es" style="width:60%"></div>
+        </div>
+        <span id="ratio-value">40%</span>
+        <span class="ratio-hint">L2</span>
+        <button class="ratio-step" onclick="adjustRatio(10)" title="Más idioma meta (hasta 100% L2)">+</button>
+      </div>
+      <div class="ratio-ends"><span>100% español</span><span>100% idioma meta</span></div>
+      <div class="footer-actions">
+        <div class="theme-btns">
+          <div class="theme-btn active" data-t="light" onclick="setTheme('light')"></div>
+          <div class="theme-btn" data-t="sepia" onclick="setTheme('sepia')"></div>
+          <div class="theme-btn" data-t="dark" onclick="setTheme('dark')"></div>
+        </div>
+        <div class="reader-extra-btns">
+          <button class="extra-btn" id="btn-parallel" onclick="toggleParallel()">Traducción ES</button>
+        </div>
+        <div class="font-size-ctrl">
+          <button onclick="changeFontSize(-1)">A−</button>
+          <button onclick="changeFontSize(1)">A+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="xray-popup" id="xray-popup"></div>
+  <div class="toast" id="toast"></div>
+  <div class="overlay" id="overlay" onclick="closeSettings()"></div>
+  <div class="settings-panel" id="settings-panel">
+    <h3>Ajustes</h3>
+    <div class="setting-group"><label>Perfil</label><div style="font-weight:600;" id="settings-profile">—</div></div>
+    <div class="setting-group"><label>Nivel</label><div style="font-weight:600;" id="settings-level">—</div></div>
+    <div class="setting-group">
+       <label>Idioma meta: <span id="slider-value">40</span>% · Español apoyo: <span id="slider-es-value">60</span>%</label>
+       <input type="range" id="ratio-slider" min="0" max="100" step="10" value="40" style="width:100%;" oninput="updateRatioFromSlider(this.value)">
+       <div id="slider-level-label" style="font-size:0.75rem;color:var(--accent);margin-top:0.35rem;">Nivel validado</div>
+      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-top:0.25rem;"><span>Solo español</span><span>Solo L2</span></div>
+    </div>
+    <div class="setting-group">
+      <label>Fuente</label>
+      <select id="font-select" onchange="changeFont(this.value)" style="width:100%;padding:0.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
+        <option value="'Literata', Georgia, serif">Literata</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Palatino Linotype', Palatino, serif">Palatino</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="margin-top:1rem;" onclick="closeSettings()">Cerrar</button>
+    <button class="btn-ghost" style="width:100%;margin-top:0.5rem;" onclick="resetOnboarding()">Reiniciar onboarding</button>
+  </div>
+
+  <script>
+    // ===================== STATE =====================
+    const state = {
+      profile: null, level: null, ratio: 40, interests: [],
+      currentBook: null, currentPage: 0, pages: [], rawPages: [], parallelOn: false,
+      theme: 'light', fontSize: 18, fontFamily: "'Literata', Georgia, serif",
+      words: {},
+      boards: [ { id: 1, name: 'Guardados', items: [] } ],
+      wordsRead: 0, pagesRead: 0,
+      reviewQueue: [], reviewIndex: 0,
+      _seenPages: null,
+      _wordCountedPages: null,
+      _pageTranslations: {},
+      _chunkTranslations: {},
+      _engineVersion: 2,
+      _translationRequest: 0,
+      _downloadTasks: {},
+      externalBooks: []
+    };
+
+    // ---------- Persistence ----------
+    const STORAGE_KEY = 'glossa_v1';
+    const EXTERNAL_CACHE_DB = 'glossa_external_cache_v1';
+    const EXTERNAL_CACHE_STORE = 'texts';
+    const EXTERNAL_CACHE_PREFIX = 'glossa_external_text_';
+    const externalMemoryCache = new Map();
+    let externalDbPromise = null;
+
+    function isNativeWebView() {
+      return Boolean(window.Capacitor || window.cordova || /Android/i.test(navigator.userAgent) && !window.chrome);
+    }
+    function safeLocalStorage(action, key, value) {
+      try {
+        if (action === 'get') return localStorage.getItem(key);
+        if (action === 'set') return localStorage.setItem(key, value);
+        if (action === 'remove') return localStorage.removeItem(key);
+      } catch (error) {
+        console.warn('Almacenamiento local no disponible:', error);
+        return null;
+      }
+      return null;
+    }
+    function openExternalCacheDb() {
+      if (!('indexedDB' in window)) return Promise.resolve(null);
+      if (externalDbPromise) return externalDbPromise;
+      externalDbPromise = new Promise(resolve => {
+        const request = indexedDB.open(EXTERNAL_CACHE_DB, 1);
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains(EXTERNAL_CACHE_STORE)) {
+            request.result.createObjectStore(EXTERNAL_CACHE_STORE);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => resolve(null);
+      });
+      return externalDbPromise;
+    }
+    async function readExternalCache(id) {
+      const key = String(id);
+      if (externalMemoryCache.has(key)) return externalMemoryCache.get(key);
+      let db = null;
+      try { db = await openExternalCacheDb(); } catch (error) { console.warn('IndexedDB no disponible:', error); }
+      if (db) {
+        const value = await new Promise(resolve => {
+          const request = db.transaction(EXTERNAL_CACHE_STORE, 'readonly')
+            .objectStore(EXTERNAL_CACHE_STORE).get(key);
+          request.onsuccess = () => resolve(request.result || '');
+          request.onerror = () => resolve('');
+        });
+        if (value) {
+          externalMemoryCache.set(key, value);
+          return value;
+        }
+      }
+      const fallback = safeLocalStorage('get', EXTERNAL_CACHE_PREFIX + encodeURIComponent(key));
+      if (fallback) externalMemoryCache.set(key, fallback);
+      return fallback || '';
+    }
+    async function writeExternalCache(id, text) {
+      const key = String(id);
+      externalMemoryCache.set(key, text);
+      let db = null;
+      try { db = await openExternalCacheDb(); } catch (error) { console.warn('IndexedDB no disponible:', error); }
+      if (db) {
+        await new Promise(resolve => {
+          const request = db.transaction(EXTERNAL_CACHE_STORE, 'readwrite')
+            .objectStore(EXTERNAL_CACHE_STORE).put(text, key);
+          request.onsuccess = request.onerror = () => resolve();
+        });
+        return;
+      }
+      // Fallback para WebViews antiguas sin IndexedDB. El contenido se guarda
+      // separado del estado principal para no llenarlo con libros completos.
+      safeLocalStorage('set', EXTERNAL_CACHE_PREFIX + encodeURIComponent(key), text);
+    }
+    async function nativeRequest(url, responseType = 'json') {
+      const capacitorHttp = window.Capacitor?.Plugins?.CapacitorHttp;
+      if (capacitorHttp?.request) {
+        try {
+          const result = await capacitorHttp.request({
+            url, method: 'GET',
+            headers: { Accept: responseType === 'json' ? 'application/json' : 'text/plain' }
+          });
+          if (result.status && (result.status < 200 || result.status >= 300)) {
+            throw new Error('HTTP ' + result.status);
+          }
+          if (responseType === 'json' && typeof result.data === 'string') return JSON.parse(result.data);
+          return result.data;
+        } catch (error) {
+          console.warn('CapacitorHttp falló; se prueba fetch:', error);
+        }
+      }
+      const cordovaHttp = window.cordova?.plugin?.http;
+      if (cordovaHttp?.get) {
+        return new Promise((resolve, reject) => {
+          cordovaHttp.get(url, {}, { Accept: responseType === 'json' ? 'application/json' : 'text/plain' },
+            data => {
+              try { resolve(responseType === 'json' && typeof data === 'string' ? JSON.parse(data) : data); }
+              catch (error) { reject(error); }
+            },
+            (error, status) => reject(new Error('HTTP ' + (status || error?.status || 'unknown')))
+          );
+        });
+      }
+      return null;
+    }
+    async function requestResource(url, responseType = 'json', timeout = 15000) {
+      if (isNativeWebView()) {
+        try {
+          const native = await nativeRequest(url, responseType);
+          if (native !== null) return native;
+        } catch (error) {
+          console.warn('Puente HTTP nativo no disponible; se prueba fetch:', error);
+        }
+      }
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timer = setTimeout(() => controller?.abort(), timeout);
+      try {
+        const response = await fetch(url, controller ? { signal: controller.signal } : {});
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return responseType === 'json' ? await response.json() : await response.text();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    function saveState() {
+      try {
+        const toSave = {
+          profile: state.profile,
+          level: state.level,
+          ratio: state.ratio,
+          interests: state.interests,
+          words: state.words,
+          boards: state.boards,
+          wordsRead: state.wordsRead,
+          pagesRead: state.pagesRead,
+          theme: state.theme,
+          fontSize: state.fontSize,
+          fontFamily: state.fontFamily,
+           pageTranslations: state._pageTranslations,
+           chunkTranslations: state._chunkTranslations,
+           engineVersion: state._engineVersion,
+           externalBooks: state.externalBooks.map(book => ({ ...book, raw: '' }))
+        };
+         safeLocalStorage('set', STORAGE_KEY, JSON.stringify(toSave));
+      } catch (e) { console.warn('No se pudo guardar estado', e); }
+    }
+    function loadState() {
+      try {
+         const raw = safeLocalStorage('get', STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (data.profile) state.profile = data.profile;
+        if (data.level) state.level = data.level;
+         if (typeof data.ratio === 'number') state.ratio = snapRatio(data.ratio);
+        if (Array.isArray(data.interests)) state.interests = data.interests;
+        if (data.words && typeof data.words === 'object') state.words = data.words;
+        if (Array.isArray(data.boards) && data.boards.length) state.boards = data.boards;
+        if (typeof data.wordsRead === 'number') state.wordsRead = data.wordsRead;
+        if (typeof data.pagesRead === 'number') state.pagesRead = data.pagesRead;
+        if (data.theme) state.theme = data.theme;
+        if (typeof data.fontSize === 'number') state.fontSize = data.fontSize;
+        if (data.fontFamily) state.fontFamily = data.fontFamily;
+        if (data.pageTranslations && typeof data.pageTranslations === 'object') {
+          state._pageTranslations = data.pageTranslations;
+        }
+         if (data.chunkTranslations && typeof data.chunkTranslations === 'object') {
+           state._chunkTranslations = data.chunkTranslations;
+         }
+         if (data.engineVersion === 2) state._engineVersion = 2;
+         if (Array.isArray(data.externalBooks)) state.externalBooks = data.externalBooks;
+        return true;
+      } catch (e) { return false; }
+    }
+
+    const INTERESTS = [
+      { id: 'tech', label: '💻 Tecnología' }, { id: 'science', label: '🔬 Ciencia' },
+      { id: 'news', label: '📰 Actualidad' }, { id: 'business', label: '💼 Negocios' },
+      { id: 'health', label: '🧘 Salud' }, { id: 'culture', label: '🎭 Cultura' },
+      { id: 'history', label: '📜 Historia' }, { id: 'environment', label: '🌍 Medio ambiente' },
+      { id: 'space', label: '🚀 Espacio' }, { id: 'food', label: '🍽 Gastronomía' },
+      { id: 'sport', label: '⚽ Deporte' }, { id: 'philosophy', label: '🧠 Filosofía' }
+    ];
+
+    const BOOKS = [
+      { id:1, title:"L'avenir de l'énergie", source:"Le Monde", level:3, lang:"fr", tags:['environment','science','tech'], emoji:"⚡",
+        raw:`L'avenir de l'énergie se joue aujourd'hui dans les laboratoires et les usines du monde entier. Alors que les énergies fossiles continuent de dominer le mix énergétique global, les experts s'accordent à dire que la transition vers des sources renouvelables n'est plus une option, mais une nécessité urgente.
+Cependant, cette transformation ne se fera pas du jour au lendemain. Elle exige des investissements massifs, une volonté politique forte et une collaboration internationale sans précédent. Les panneaux solaires et les éoliennes représentent déjà une part croissante de la production d'électricité dans de nombreux pays européens.
+Par conséquent, les gouvernements doivent accélérer le déploiement des infrastructures nécessaires. Il ne s'agit pas seulement de construire de nouvelles centrales, mais aussi de moderniser les réseaux de distribution et de stocker l'énergie de manière efficace. Les batteries de nouvelle génération et l'hydrogène vert apparaissent comme des solutions prometteuses.
+Bien que les défis techniques restent importants, le véritable obstacle est souvent d'ordre économique et social. Les industries traditionnelles doivent se reconvertir, tandis que les travailleurs ont besoin de formations adaptées. En outre, les citoyens doivent accepter que la transition implique parfois des coûts à court terme pour des bénéfices à long terme.
+En définitive, l'avenir énergétique dépendra de notre capacité collective à innover, à coopérer et à faire des choix courageux dès maintenant.` },
+      { id:2, title:"The Rise of AI Agents", source:"TechCrunch", level:4, lang:"en", tags:['tech','science','business'], emoji:"🤖",
+        raw:`Artificial intelligence is rapidly evolving beyond simple chatbots and image generators. The next frontier is autonomous AI agents capable of planning, reasoning and executing complex tasks with minimal human supervision.
+These systems combine large language models with tools, memory and the ability to break down goals into sequential steps. Consequently, they can research topics, write code, schedule meetings or even negotiate on behalf of their users.
+However, this power comes with significant challenges. Ensuring that agents remain aligned with human intentions is far from trivial. Researchers are actively exploring techniques such as constitutional AI, reward modeling and runtime monitoring to keep these systems under control.
+Furthermore, the economic impact could be profound. Knowledge workers may see their roles transformed as routine cognitive tasks become automated. At the same time, entirely new categories of jobs will emerge around the design, supervision and auditing of agent fleets.
+Although the technology is still immature, progress is accelerating. In the coming years we are likely to witness agents that can manage entire projects end-to-end. The question is no longer whether this future will arrive, but how prepared we will be when it does.` },
+      { id:3, title:"La routine du matin", source:"France 24", level:2, lang:"fr", tags:['health','culture'], emoji:"☀️",
+        raw:`Beaucoup de gens cherchent la routine du matin parfaite. Certains se lèvent très tôt pour méditer ou faire du sport. D'autres préfèrent prendre le temps de lire ou de préparer un bon petit-déjeuner.
+Cependant, il n'existe pas de formule unique. Ce qui fonctionne pour une personne peut ne pas convenir à une autre. L'important est de trouver des habitudes qui vous donnent de l'énergie pour la journée.
+Par exemple, boire un verre d'eau au réveil aide le corps à se réveiller. Ensuite, quelques minutes de mouvement léger peuvent améliorer l'humeur. Enfin, éviter de regarder son téléphone pendant la première heure permet de rester concentré.
+Bien sûr, la discipline est nécessaire au début. Mais avec le temps, ces gestes deviennent automatiques. Ainsi, vous commencez la journée avec un sentiment de contrôle et de calme.` },
+      { id:4, title:"Why Sleep Matters", source:"BBC", level:3, lang:"en", tags:['health','science'], emoji:"😴",
+        raw:`Sleep is not a luxury. It is a fundamental biological process that supports almost every system in the human body. During deep sleep, the brain clears out metabolic waste, consolidates memories and regulates hormones that control appetite and stress.
+Nevertheless, modern life constantly undermines our ability to rest. Screens emit blue light that suppresses melatonin. Work pressure and social obligations push bedtimes later. As a result, chronic sleep deprivation has become widespread.
+Consequently, people experience reduced concentration, weaker immune responses and higher risks of cardiovascular disease. Studies show that even moderate sleep loss impairs decision-making almost as much as alcohol.
+Although catching up on weekends feels helpful, it does not fully reverse the damage. The body thrives on consistency. Therefore, maintaining a regular sleep schedule remains one of the most effective health interventions available.` },
+      { id:5, title:"L'impression 3D industrielle", source:"Les Échos", level:5, lang:"fr", tags:['tech','business','science'], emoji:"🖨️",
+        raw:`L'impression tridimensionnelle a quitté le stade du prototype pour entrer dans la production industrielle à grande échelle. Les constructeurs aéronautiques utilisent désormais des pièces imprimées en alliages de titane pour alléger les structures tout en conservant leur résistance mécanique.
+Cependant, les défis de certification restent considérables. Chaque pièce doit prouver sa fiabilité dans des conditions extrêmes de température et de contrainte. Par conséquent, les organismes de régulation exigent des protocoles de contrôle non destructif extrêmement rigoureux.
+En outre, la chaîne d'approvisionnement se transforme. Au lieu de stocker des milliers de références, les entreprises peuvent produire à la demande, réduisant ainsi les coûts de stockage et les délais de livraison. Cette flexibilité ouvre la voie à une personnalisation de masse jusqu'alors impossible.
+Bien que le coût des machines industrielles demeure élevé, la baisse progressive des prix des matériaux et l'amélioration des vitesses d'impression rendent la technologie de plus en plus accessible. En définitive, l'impression 3D redéfinit les frontières entre conception, fabrication et logistique.` },
+      { id:6, title:"Mars, prochaine frontière", source:"CNES", level:4, lang:"fr", tags:['space','science','tech'], emoji:"🔴",
+        raw:`L'exploration de Mars n'est plus un rêve lointain. Les agences spatiales et les entreprises privées multiplient les missions robotiques pour préparer le terrain à une présence humaine durable.
+Cependant, les obstacles techniques restent immenses. Le voyage dure entre six et neuf mois, exposant les astronautes à des radiations cosmiques et à une microgravité prolongée. Par conséquent, les ingénieurs développent de nouveaux boucliers et des systèmes de support de vie fermés.
+En outre, la production de nourriture et d'oxygène sur place sera cruciale. Les expériences en cours testent la culture de plantes dans le sol martien et l'extraction d'eau à partir de la glace du sous-sol. Bien que les défis soient considérables, chaque succès rapproche l'humanité d'une nouvelle ère d'exploration.` },
+      { id:7, title:"The Future of Work", source:"The Economist", level:4, lang:"en", tags:['business','tech','philosophy'], emoji:"💼",
+        raw:`Remote work has permanently altered the relationship between employers and employees. What began as an emergency measure during the pandemic has become a structural shift in how knowledge work is organised.
+However, the hybrid model presents its own difficulties. Collaboration, mentorship and company culture are harder to maintain when teams rarely share the same physical space. Consequently, organisations are experimenting with new rituals, digital tools and office designs that encourage purposeful presence rather than mandatory attendance.
+Furthermore, the rise of artificial intelligence is accelerating change. Tasks that once required human judgment are increasingly automated, forcing workers to focus on creativity, empathy and complex problem-solving. Although many fear displacement, history suggests that new categories of work will emerge. The real challenge is ensuring that education systems and social safety nets adapt quickly enough.` },
+      { id:8, title:"La philosophie du minimalisme", source:"Philosophie Magazine", level:3, lang:"fr", tags:['philosophy','culture','health'], emoji:"🪴",
+        raw:`Le minimalisme n'est pas seulement une tendance esthétique. C'est une réponse philosophique à la saturation de la vie moderne. En réduisant le nombre d'objets et d'obligations, on cherche à retrouver de la clarté mentale et du temps pour l'essentiel.
+Cependant, le minimalisme mal compris peut devenir une autre forme de performance. Certaines personnes accumulent des règles strictes au lieu de cultiver la simplicité intérieure. Par conséquent, il est utile de se demander ce que l'on veut vraiment protéger : le silence, les relations, la créativité ?
+En outre, la sobriété matérielle a des implications écologiques évidentes. Moins consommer, c'est moins extraire et moins jeter. Bien que le geste individuel soit limité, il participe à un changement culturel plus large. Ainsi, le minimalisme rejoint des questions anciennes sur la bonne vie et la mesure.` },
+      { id:9, title:"Les océans et le climat", source:"CNRS", level:3, lang:"fr", tags:['environment','science','news'], emoji:"🌊",
+        raw:`Les océans absorbent une part considérable de la chaleur et du dioxyde de carbone produits par les activités humaines. Cette capacité a longtemps freiné le réchauffement de l'atmosphère, mais elle a un prix. L'eau de mer devient plus acide, ce qui menace les coraux, les mollusques et toute la chaîne alimentaire marine.
+Par ailleurs, la montée du niveau des mers menace déjà des villes côtières et des îles basses. Les scientifiques observent la fonte des glaciers et de la banquise avec une attention croissante. Pourtant, les solutions existent : protéger les mangroves, réduire les émissions et restaurer les écosystèmes marins.
+Il faut aussi repenser la pêche industrielle. Des stocks s'effondrent pendant que d'autres espèces migrent vers des eaux plus froides. Les communautés qui vivent de la mer doivent s'adapter rapidement. En définitive, la santé des océans conditionne celle de la planète entière.` },
+      { id:10, title:"How Cities Learn to Breathe", source:"The Guardian", level:3, lang:"en", tags:['environment','culture','news'], emoji:"🌳",
+        raw:`Urban planners are redesigning cities so that people can walk, cycle and meet outdoors without depending on cars. Green corridors, pocket parks and shaded streets lower temperatures during heat waves and improve air quality. Consequently, neighbourhoods become healthier and more pleasant places to live.
+However, transformation is uneven. Wealthier districts often receive parks first, while denser working-class areas wait longer. Fair planning requires listening to residents and measuring real needs, not only aesthetic goals. Furthermore, trees need water, care and long-term budgets; a single planting day is not enough.
+Although change is slow, successful examples from Copenhagen to Singapore show that political will and patient investment can reshape daily life. Cities that learn to breathe give their citizens space, safety and a reason to stay.` },
+      { id:11, title:"Apprendre une langue en lisant", source:"Café polyglotte", level:2, lang:"fr", tags:['culture','philosophy'], emoji:"📚",
+        raw:`Lire dans une langue étrangère est l'une des méthodes les plus naturelles pour progresser. Au début, chaque page demande de l'effort. Ensuite, le cerveau reconnaît des structures répétées et le rythme s'améliore. Il n'est pas nécessaire de comprendre chaque mot pour suivre l'histoire.
+Beaucoup d'apprenants abandonnent trop tôt. Ils choisissent des textes trop difficiles ou traduisent chaque phrase. Une meilleure stratégie consiste à choisir un sujet intéressant et un niveau légèrement au-dessus du sien. Ainsi, la curiosité pousse à continuer.
+Avec le temps, le vocabulaire s'installe par le contexte. Les mots vus plusieurs fois deviennent familiers. Lire un peu chaque jour vaut mieux qu'une longue séance rare. Patience et régularité transforment l'effort en plaisir.` },
+      { id:12, title:"The Quiet Power of Habits", source:"Atomic ideas", level:2, lang:"en", tags:['health','philosophy','culture'], emoji:"🔁",
+        raw:`Small habits shape most of what we become. A few minutes of reading, a short walk, or writing one sentence each day may look insignificant. Over months, however, those actions compound into skill and confidence.
+People often wait for motivation. Motivation is unreliable. Systems are better: prepare the book the night before, leave the shoes by the door, keep the notebook open. When friction is low, the next step feels easy.
+Mistakes will happen. Missing one day is normal; missing two becomes a pattern. The goal is not perfection but returning quickly. Gentle consistency beats intense effort that disappears after a week.` }
+    ];
+
+    // Compact dictionary (key words only for demo)
+    // Diccionario ampliado: solo palabras con traducción ES real (nunca mostrar [palabra])
+    const DICT = {
+      fr: {
+      // Conectores FR
+      "cependant":{es:"sin embargo",en:"however",freq:82,diff:40},"pourtant":{es:"sin embargo",en:"yet",freq:70,diff:45},
+      "conséquent":{es:"consiguiente",en:"consequently",freq:68,diff:55},"conséquence":{es:"consecuencia",en:"consequence",freq:65,diff:50},
+      "bien":{es:"bien",en:"well",freq:90,diff:20},"alors":{es:"entonces",en:"then",freq:85,diff:25},
+      "outre":{es:"además",en:"furthermore",freq:65,diff:52},"définitive":{es:"definitiva",en:"definitive",freq:55,diff:60},
+      "néanmoins":{es:"no obstante",en:"nevertheless",freq:60,diff:58},"ainsi":{es:"así",en:"thus",freq:80,diff:35},
+      "donc":{es:"por lo tanto",en:"therefore",freq:88,diff:30},"tandis":{es:"mientras",en:"while",freq:70,diff:40},
+      "lorsque":{es:"cuando",en:"when",freq:75,diff:35},"puisque":{es:"puesto que",en:"since",freq:68,diff:45},
+      "car":{es:"porque",en:"because",freq:85,diff:25},"mais":{es:"pero",en:"but",freq:95,diff:15},
+      // Contenido FR - energía / general
+      "avenir":{es:"futuro",en:"future",freq:70,diff:35},"énergie":{es:"energía",en:"energy",freq:75,diff:30},
+      "énergétique":{es:"energético",en:"energy",freq:60,diff:45},"énergies":{es:"energías",en:"energies",freq:70,diff:35},
+      "joue":{es:"se juega",en:"plays",freq:70,diff:40},"aujourd'hui":{es:"hoy",en:"today",freq:85,diff:20},
+      "laboratoires":{es:"laboratorios",en:"laboratories",freq:55,diff:50},"usines":{es:"fábricas",en:"factories",freq:60,diff:40},
+      "monde":{es:"mundo",en:"world",freq:90,diff:15},"entier":{es:"entero",en:"entire",freq:75,diff:30},
+      "fossiles":{es:"fósiles",en:"fossil",freq:48,diff:50},"continuent":{es:"continúan",en:"continue",freq:70,diff:35},
+      "dominer":{es:"dominar",en:"dominate",freq:55,diff:50},"mix":{es:"mezcla",en:"mix",freq:60,diff:40},
+      "global":{es:"global",en:"global",freq:80,diff:25},"experts":{es:"expertos",en:"experts",freq:70,diff:30},
+      "s'accordent":{es:"coinciden",en:"agree",freq:50,diff:55},"dire":{es:"decir",en:"say",freq:90,diff:15},
+      "transition":{es:"transición",en:"transition",freq:65,diff:40},"vers":{es:"hacia",en:"towards",freq:80,diff:25},
+      "sources":{es:"fuentes",en:"sources",freq:72,diff:30},"renouvelables":{es:"renovables",en:"renewable",freq:50,diff:55},
+      "option":{es:"opción",en:"option",freq:75,diff:25},"nécessité":{es:"necesidad",en:"necessity",freq:68,diff:40},
+      "urgente":{es:"urgente",en:"urgent",freq:70,diff:30},"transformation":{es:"transformación",en:"transformation",freq:60,diff:45},
+      "fera":{es:"hará",en:"will do",freq:70,diff:40},"lendemain":{es:"día siguiente",en:"next day",freq:55,diff:50},
+      "exige":{es:"exige",en:"requires",freq:65,diff:40},"investissements":{es:"inversiones",en:"investments",freq:55,diff:60},
+      "investissement":{es:"inversión",en:"investment",freq:55,diff:60},"massifs":{es:"masivos",en:"massive",freq:55,diff:50},
+      "volonté":{es:"voluntad",en:"will",freq:62,diff:45},"politique":{es:"política",en:"political",freq:75,diff:30},
+      "forte":{es:"fuerte",en:"strong",freq:80,diff:25},"collaboration":{es:"colaboración",en:"collaboration",freq:60,diff:45},
+      "internationale":{es:"internacional",en:"international",freq:70,diff:30},"précédent":{es:"precedente",en:"precedent",freq:50,diff:60},
+      "panneaux":{es:"paneles",en:"panels",freq:58,diff:40},"solaires":{es:"solares",en:"solar",freq:60,diff:35},
+      "éoliennes":{es:"turbinas eólicas",en:"wind turbines",freq:42,diff:65},"représentent":{es:"representan",en:"represent",freq:65,diff:40},
+      "déjà":{es:"ya",en:"already",freq:85,diff:20},"part":{es:"parte",en:"share",freq:80,diff:25},
+      "croissante":{es:"creciente",en:"growing",freq:58,diff:50},"production":{es:"producción",en:"production",freq:70,diff:35},
+      "électricité":{es:"electricidad",en:"electricity",freq:65,diff:40},"nombreux":{es:"numerosos",en:"many",freq:68,diff:35},
+      "pays":{es:"países",en:"countries",freq:80,diff:25},"européens":{es:"europeos",en:"European",freq:65,diff:40},
+      "gouvernements":{es:"gobiernos",en:"governments",freq:72,diff:35},"doivent":{es:"deben",en:"must",freq:85,diff:20},
+      "accélérer":{es:"acelerar",en:"accelerate",freq:55,diff:50},"déploiement":{es:"despliegue",en:"deployment",freq:40,diff:70},
+      "infrastructures":{es:"infraestructuras",en:"infrastructures",freq:52,diff:58},"infrastructure":{es:"infraestructura",en:"infrastructure",freq:52,diff:58},
+      "nécessaires":{es:"necesarias",en:"necessary",freq:70,diff:35},"agit":{es:"trata",en:"is about",freq:65,diff:40},
+      "seulement":{es:"solo",en:"only",freq:80,diff:25},"construire":{es:"construir",en:"build",freq:70,diff:35},
+      "nouvelles":{es:"nuevas",en:"new",freq:85,diff:20},"centrales":{es:"centrales",en:"power plants",freq:50,diff:55},
+      "aussi":{es:"también",en:"also",freq:90,diff:15},"moderniser":{es:"modernizar",en:"modernize",freq:48,diff:55},
+      "réseaux":{es:"redes",en:"networks",freq:65,diff:40},"distribution":{es:"distribución",en:"distribution",freq:68,diff:35},
+      "stocker":{es:"almacenar",en:"store",freq:52,diff:50},"manière":{es:"manera",en:"way",freq:75,diff:30},
+      "efficace":{es:"eficaz",en:"efficient",freq:70,diff:35},"batteries":{es:"baterías",en:"batteries",freq:65,diff:35},
+      "génération":{es:"generación",en:"generation",freq:65,diff:40},"hydrogène":{es:"hidrógeno",en:"hydrogen",freq:45,diff:65},
+      "vert":{es:"verde",en:"green",freq:75,diff:25},"apparaissent":{es:"aparecen",en:"appear",freq:60,diff:45},
+      "solutions":{es:"soluciones",en:"solutions",freq:72,diff:30},"prometteuses":{es:"prometedoras",en:"promising",freq:48,diff:55},
+      "défis":{es:"desafíos",en:"challenges",freq:65,diff:45},"techniques":{es:"técnicos",en:"technical",freq:70,diff:35},
+      "restent":{es:"permanecen",en:"remain",freq:68,diff:40},"importants":{es:"importantes",en:"important",freq:80,diff:25},
+      "véritable":{es:"verdadero",en:"real",freq:65,diff:40},"obstacle":{es:"obstáculo",en:"obstacle",freq:58,diff:50},
+      "souvent":{es:"a menudo",en:"often",freq:75,diff:30},"ordre":{es:"orden",en:"order",freq:70,diff:35},
+      "économique":{es:"económico",en:"economic",freq:75,diff:35},"social":{es:"social",en:"social",freq:85,diff:20},
+      "industries":{es:"industrias",en:"industries",freq:68,diff:40},"traditionnelles":{es:"tradicionales",en:"traditional",freq:60,diff:45},
+      "reconvertir":{es:"reconvertir",en:"convert",freq:40,diff:65},"tandis":{es:"mientras",en:"while",freq:70,diff:40},
+      "travailleurs":{es:"trabajadores",en:"workers",freq:65,diff:40},"besoin":{es:"necesidad",en:"need",freq:78,diff:30},
+      "formations":{es:"formaciones",en:"training",freq:55,diff:50},"adaptées":{es:"adaptadas",en:"adapted",freq:55,diff:50},
+      "citoyens":{es:"ciudadanos",en:"citizens",freq:65,diff:40},"accepter":{es:"aceptar",en:"accept",freq:75,diff:30},
+      "implique":{es:"implica",en:"involves",freq:62,diff:45},"parfois":{es:"a veces",en:"sometimes",freq:75,diff:30},
+      "coûts":{es:"costes",en:"costs",freq:70,diff:35},"court":{es:"corto",en:"short",freq:75,diff:30},
+      "terme":{es:"plazo",en:"term",freq:70,diff:35},"bénéfices":{es:"beneficios",en:"benefits",freq:68,diff:40},
+      "long":{es:"largo",en:"long",freq:80,diff:25},"dépendra":{es:"dependerá",en:"will depend",freq:55,diff:50},
+      "notre":{es:"nuestra",en:"our",freq:85,diff:20},"capacité":{es:"capacidad",en:"capacity",freq:70,diff:35},
+      "collective":{es:"colectiva",en:"collective",freq:55,diff:50},"innover":{es:"innovar",en:"innovate",freq:50,diff:55},
+      "coopérer":{es:"cooperar",en:"cooperate",freq:52,diff:55},"faire":{es:"hacer",en:"make",freq:90,diff:15},
+      "choix":{es:"elecciones",en:"choices",freq:70,diff:35},"courageux":{es:"valientes",en:"courageous",freq:45,diff:60},
+      "maintenant":{es:"ahora",en:"now",freq:85,diff:20},"encore":{es:"aún",en:"still",freq:80,diff:25},
+      // FR routine / sleep / other
+      "beaucoup":{es:"muchos",en:"many",freq:85,diff:20},"gens":{es:"gente",en:"people",freq:85,diff:20},
+      "cherchent":{es:"buscan",en:"seek",freq:70,diff:35},"routine":{es:"rutina",en:"routine",freq:70,diff:35},
+      "matin":{es:"mañana",en:"morning",freq:80,diff:25},"parfaite":{es:"perfecta",en:"perfect",freq:70,diff:35},
+      "certains":{es:"algunos",en:"some",freq:80,diff:25},"lèvent":{es:"levantan",en:"get up",freq:65,diff:40},
+      "tôt":{es:"temprano",en:"early",freq:75,diff:30},"méditer":{es:"meditar",en:"meditate",freq:55,diff:50},
+      "sport":{es:"deporte",en:"sport",freq:80,diff:25},"d'autres":{es:"otros",en:"others",freq:80,diff:25},
+      "préfèrent":{es:"prefieren",en:"prefer",freq:65,diff:40},"prendre":{es:"tomar",en:"take",freq:85,diff:20},
+      "temps":{es:"tiempo",en:"time",freq:90,diff:15},"lire":{es:"leer",en:"read",freq:85,diff:20},
+      "préparer":{es:"preparar",en:"prepare",freq:70,diff:35},"petit-déjeuner":{es:"desayuno",en:"breakfast",freq:60,diff:40},
+      "existe":{es:"existe",en:"exists",freq:75,diff:30},"formule":{es:"fórmula",en:"formula",freq:65,diff:40},
+      "unique":{es:"única",en:"unique",freq:70,diff:35},"fonctionne":{es:"funciona",en:"works",freq:70,diff:35},
+      "personne":{es:"persona",en:"person",freq:80,diff:25},"convenir":{es:"convenir",en:"suit",freq:55,diff:50},
+      "autre":{es:"otra",en:"other",freq:85,diff:20},"important":{es:"importante",en:"important",freq:85,diff:20},
+      "trouver":{es:"encontrar",en:"find",freq:80,diff:25},"habitudes":{es:"hábitos",en:"habits",freq:70,diff:35},
+      "donnent":{es:"dan",en:"give",freq:75,diff:30},"journée":{es:"jornada",en:"day",freq:75,diff:30},
+      "exemple":{es:"ejemplo",en:"example",freq:80,diff:25},"boire":{es:"beber",en:"drink",freq:75,diff:30},
+      "verre":{es:"vaso",en:"glass",freq:70,diff:35},"eau":{es:"agua",en:"water",freq:85,diff:20},
+      "réveil":{es:"despertar",en:"waking",freq:60,diff:45},"aide":{es:"ayuda",en:"helps",freq:80,diff:25},
+      "corps":{es:"cuerpo",en:"body",freq:80,diff:25},"réveiller":{es:"despertar",en:"wake",freq:65,diff:40},
+      "ensuite":{es:"después",en:"then",freq:80,diff:25},"quelques":{es:"algunos",en:"a few",freq:80,diff:25},
+      "minutes":{es:"minutos",en:"minutes",freq:85,diff:20},"mouvement":{es:"movimiento",en:"movement",freq:70,diff:35},
+      "léger":{es:"ligero",en:"light",freq:70,diff:35},"peuvent":{es:"pueden",en:"can",freq:85,diff:20},
+      "améliorer":{es:"mejorar",en:"improve",freq:70,diff:35},"humeur":{es:"humor",en:"mood",freq:65,diff:40},
+      "enfin":{es:"finalmente",en:"finally",freq:75,diff:30},"éviter":{es:"evitar",en:"avoid",freq:70,diff:35},
+      "regarder":{es:"mirar",en:"look",freq:80,diff:25},"téléphone":{es:"teléfono",en:"phone",freq:75,diff:30},
+      "pendant":{es:"durante",en:"during",freq:80,diff:25},"première":{es:"primera",en:"first",freq:80,diff:25},
+      "heure":{es:"hora",en:"hour",freq:80,diff:25},"permet":{es:"permite",en:"allows",freq:75,diff:30},
+      "rester":{es:"permanecer",en:"stay",freq:75,diff:30},"concentré":{es:"concentrado",en:"focused",freq:65,diff:40},
+      "discipline":{es:"disciplina",en:"discipline",freq:60,diff:45},"nécessaire":{es:"necesaria",en:"necessary",freq:75,diff:30},
+      "début":{es:"comienzo",en:"start",freq:75,diff:30},"avec":{es:"con",en:"with",freq:95,diff:10},
+      "gestes":{es:"gestos",en:"gestures",freq:60,diff:45},"deviennent":{es:"se vuelven",en:"become",freq:65,diff:40},
+      "automatiques":{es:"automáticos",en:"automatic",freq:60,diff:45},"commencez":{es:"empiezas",en:"start",freq:70,diff:35},
+      "sentiment":{es:"sentimiento",en:"feeling",freq:70,diff:35},"contrôle":{es:"control",en:"control",freq:75,diff:30},
+      "calme":{es:"calma",en:"calm",freq:70,diff:35},
+      // FR impression 3D / Mars / minimalisme
+      "impression":{es:"impresión",en:"printing",freq:65,diff:40},"tridimensionnelle":{es:"tridimensional",en:"3D",freq:40,diff:70},
+      "quitté":{es:"abandonado",en:"left",freq:55,diff:50},"stade":{es:"etapa",en:"stage",freq:60,diff:45},
+      "prototype":{es:"prototipo",en:"prototype",freq:55,diff:50},"entrer":{es:"entrar",en:"enter",freq:75,diff:30},
+      "industrielle":{es:"industrial",en:"industrial",freq:60,diff:45},"échelle":{es:"escala",en:"scale",freq:65,diff:40},
+      "constructeurs":{es:"constructores",en:"manufacturers",freq:50,diff:55},"aéronautiques":{es:"aeronáuticos",en:"aerospace",freq:40,diff:70},
+      "utilisent":{es:"usan",en:"use",freq:75,diff:30},"désormais":{es:"de ahora en adelante",en:"from now on",freq:55,diff:50},
+      "pièces":{es:"piezas",en:"parts",freq:70,diff:35},"imprimées":{es:"impresas",en:"printed",freq:50,diff:55},
+      "alliages":{es:"aleaciones",en:"alloys",freq:40,diff:70},"titane":{es:"titanio",en:"titanium",freq:45,diff:60},
+      "alléger":{es:"aligerar",en:"lighten",freq:45,diff:60},"structures":{es:"estructuras",en:"structures",freq:65,diff:40},
+      "conservant":{es:"conservando",en:"keeping",freq:55,diff:50},"résistance":{es:"resistencia",en:"strength",freq:60,diff:45},
+      "mécanique":{es:"mecánica",en:"mechanical",freq:55,diff:50},"certification":{es:"certificación",en:"certification",freq:50,diff:55},
+      "considérables":{es:"considerables",en:"considerable",freq:55,diff:50},"chaque":{es:"cada",en:"each",freq:85,diff:20},
+      "pièce":{es:"pieza",en:"piece",freq:70,diff:35},"prouver":{es:"probar",en:"prove",freq:65,diff:40},
+      "fiabilité":{es:"fiabilidad",en:"reliability",freq:50,diff:55},"conditions":{es:"condiciones",en:"conditions",freq:70,diff:35},
+      "extrêmes":{es:"extremas",en:"extreme",freq:55,diff:50},"température":{es:"temperatura",en:"temperature",freq:65,diff:40},
+      "contrainte":{es:"tensión",en:"stress",freq:55,diff:50},"organismes":{es:"organismos",en:"bodies",freq:55,diff:50},
+      "régulation":{es:"regulación",en:"regulation",freq:55,diff:50},"exigent":{es:"exigen",en:"demand",freq:60,diff:45},
+      "protocoles":{es:"protocolos",en:"protocols",freq:55,diff:50},"contrôle":{es:"control",en:"control",freq:75,diff:30},
+      "non":{es:"no",en:"non",freq:95,diff:10},"destructif":{es:"destructivo",en:"destructive",freq:45,diff:60},
+      "extrêmement":{es:"extremadamente",en:"extremely",freq:60,diff:45},"rigoureux":{es:"rigurosos",en:"rigorous",freq:50,diff:55},
+      "chaîne":{es:"cadena",en:"chain",freq:65,diff:40},"approvisionnement":{es:"suministro",en:"supply",freq:50,diff:55},
+      "transforme":{es:"se transforma",en:"transforms",freq:60,diff:45},"lieu":{es:"lugar",en:"place",freq:80,diff:25},
+      "stocker":{es:"almacenar",en:"store",freq:52,diff:50},"milliers":{es:"miles",en:"thousands",freq:65,diff:40},
+      "références":{es:"referencias",en:"references",freq:55,diff:50},"entreprises":{es:"empresas",en:"companies",freq:70,diff:35},
+      "peuvent":{es:"pueden",en:"can",freq:85,diff:20},"produire":{es:"producir",en:"produce",freq:70,diff:35},
+      "demande":{es:"demanda",en:"demand",freq:70,diff:35},"réduisant":{es:"reduciendo",en:"reducing",freq:55,diff:50},
+      "stockage":{es:"almacenamiento",en:"storage",freq:55,diff:50},"délais":{es:"plazos",en:"delays",freq:55,diff:50},
+      "livraison":{es:"entrega",en:"delivery",freq:60,diff:45},"flexibilité":{es:"flexibilidad",en:"flexibility",freq:55,diff:50},
+      "ouvre":{es:"abre",en:"opens",freq:75,diff:30},"voie":{es:"vía",en:"way",freq:70,diff:35},
+      "personnalisation":{es:"personalización",en:"customization",freq:45,diff:60},"masse":{es:"masa",en:"mass",freq:65,diff:40},
+      "jusqu'alors":{es:"hasta entonces",en:"until then",freq:45,diff:60},"impossible":{es:"imposible",en:"impossible",freq:70,diff:35},
+      "coût":{es:"coste",en:"cost",freq:70,diff:35},"machines":{es:"máquinas",en:"machines",freq:70,diff:35},
+      "demeure":{es:"permanece",en:"remains",freq:55,diff:50},"élevé":{es:"elevado",en:"high",freq:70,diff:35},
+      "baisse":{es:"bajada",en:"drop",freq:65,diff:40},"progressive":{es:"progresiva",en:"gradual",freq:60,diff:45},
+      "prix":{es:"precios",en:"prices",freq:75,diff:30},"matériaux":{es:"materiales",en:"materials",freq:65,diff:40},
+      "amélioration":{es:"mejora",en:"improvement",freq:60,diff:45},"vitesses":{es:"velocidades",en:"speeds",freq:60,diff:45},
+      "rendent":{es:"hacen",en:"make",freq:70,diff:35},"technologie":{es:"tecnología",en:"technology",freq:70,diff:35},
+      "accessible":{es:"accesible",en:"accessible",freq:65,diff:40},"redéfinit":{es:"redefine",en:"redefines",freq:45,diff:60},
+      "frontières":{es:"fronteras",en:"boundaries",freq:60,diff:45},"conception":{es:"diseño",en:"design",freq:65,diff:40},
+      "fabrication":{es:"fabricación",en:"manufacturing",freq:55,diff:50},"logistique":{es:"logística",en:"logistics",freq:55,diff:50},
+      "exploration":{es:"exploración",en:"exploration",freq:60,diff:45},"mars":{es:"Marte",en:"Mars",freq:70,diff:30},
+      "rêve":{es:"sueño",en:"dream",freq:70,diff:35},"lointain":{es:"lejano",en:"distant",freq:55,diff:50},
+      "agences":{es:"agencias",en:"agencies",freq:60,diff:45},"spatiales":{es:"espaciales",en:"space",freq:55,diff:50},
+      "privées":{es:"privadas",en:"private",freq:65,diff:40},"multiplient":{es:"multiplican",en:"multiply",freq:50,diff:55},
+      "missions":{es:"misiones",en:"missions",freq:65,diff:40},"robotiques":{es:"robóticas",en:"robotic",freq:50,diff:55},
+      "préparer":{es:"preparar",en:"prepare",freq:70,diff:35},"terrain":{es:"terreno",en:"ground",freq:70,diff:35},
+      "présence":{es:"presencia",en:"presence",freq:70,diff:35},"humaine":{es:"humana",en:"human",freq:75,diff:30},
+      "durable":{es:"sostenible",en:"lasting",freq:65,diff:40},"obstacles":{es:"obstáculos",en:"obstacles",freq:60,diff:45},
+      "immenses":{es:"inmensos",en:"immense",freq:55,diff:50},"voyage":{es:"viaje",en:"journey",freq:75,diff:30},
+      "dure":{es:"dura",en:"lasts",freq:70,diff:35},"entre":{es:"entre",en:"between",freq:90,diff:15},
+      "six":{es:"seis",en:"six",freq:85,diff:15},"neuf":{es:"nueve",en:"nine",freq:85,diff:15},
+      "mois":{es:"meses",en:"months",freq:80,diff:25},"exposant":{es:"exponiendo",en:"exposing",freq:50,diff:55},
+      "astronautes":{es:"astronautas",en:"astronauts",freq:55,diff:50},"radiations":{es:"radiaciones",en:"radiation",freq:50,diff:55},
+      "cosmiques":{es:"cósmicas",en:"cosmic",freq:45,diff:60},"microgravité":{es:"microgravedad",en:"microgravity",freq:35,diff:75},
+      "prolongée":{es:"prolongada",en:"prolonged",freq:50,diff:55},"ingénieurs":{es:"ingenieros",en:"engineers",freq:60,diff:45},
+      "développent":{es:"desarrollan",en:"develop",freq:60,diff:45},"nouveaux":{es:"nuevos",en:"new",freq:80,diff:25},
+      "boucliers":{es:"escudos",en:"shields",freq:50,diff:55},"systèmes":{es:"sistemas",en:"systems",freq:75,diff:30},
+      "support":{es:"soporte",en:"support",freq:70,diff:35},"vie":{es:"vida",en:"life",freq:90,diff:15},
+      "fermés":{es:"cerrados",en:"closed",freq:65,diff:40},"nourriture":{es:"comida",en:"food",freq:75,diff:30},
+      "oxygène":{es:"oxígeno",en:"oxygen",freq:60,diff:45},"place":{es:"lugar",en:"place",freq:80,diff:25},
+      "sera":{es:"será",en:"will be",freq:80,diff:25},"cruciale":{es:"crucial",en:"crucial",freq:65,diff:40},
+      "expériences":{es:"experiencias",en:"experiments",freq:65,diff:40},"cours":{es:"curso",en:"course",freq:75,diff:30},
+      "testent":{es:"prueban",en:"test",freq:60,diff:45},"culture":{es:"cultivo",en:"culture",freq:70,diff:35},
+      "plantes":{es:"plantas",en:"plants",freq:70,diff:35},"sol":{es:"suelo",en:"soil",freq:70,diff:35},
+      "martien":{es:"marciano",en:"Martian",freq:45,diff:60},"extraction":{es:"extracción",en:"extraction",freq:50,diff:55},
+      "glace":{es:"hielo",en:"ice",freq:65,diff:40},"sous-sol":{es:"subsuelo",en:"underground",freq:50,diff:55},
+      "soient":{es:"sean",en:"are",freq:70,diff:35},"succès":{es:"éxito",en:"success",freq:70,diff:35},
+      "rapproche":{es:"acerca",en:"brings closer",freq:55,diff:50},"humanité":{es:"humanidad",en:"humanity",freq:65,diff:40},
+      "ère":{es:"era",en:"era",freq:60,diff:45},"minimalisme":{es:"minimalismo",en:"minimalism",freq:50,diff:55},
+      "tendance":{es:"tendencia",en:"trend",freq:65,diff:40},"esthétique":{es:"estética",en:"aesthetic",freq:55,diff:50},
+      "réponse":{es:"respuesta",en:"response",freq:70,diff:35},"philosophique":{es:"filosófica",en:"philosophical",freq:50,diff:55},
+      "saturation":{es:"saturación",en:"saturation",freq:50,diff:55},"moderne":{es:"moderna",en:"modern",freq:75,diff:30},
+      "réduisant":{es:"reduciendo",en:"reducing",freq:55,diff:50},"nombre":{es:"número",en:"number",freq:80,diff:25},
+      "objets":{es:"objetos",en:"objects",freq:70,diff:35},"obligations":{es:"obligaciones",en:"obligations",freq:60,diff:45},
+      "cherche":{es:"busca",en:"seeks",freq:75,diff:30},"retrouver":{es:"recuperar",en:"regain",freq:60,diff:45},
+      "clarté":{es:"claridad",en:"clarity",freq:60,diff:45},"mentale":{es:"mental",en:"mental",freq:70,diff:35},
+      "essentiel":{es:"esencial",en:"essential",freq:70,diff:35},"compris":{es:"entendido",en:"understood",freq:65,diff:40},
+      "devenir":{es:"convertirse",en:"become",freq:70,diff:35},"forme":{es:"forma",en:"form",freq:80,diff:25},
+      "performance":{es:"rendimiento",en:"performance",freq:65,diff:40},"certaines":{es:"algunas",en:"some",freq:80,diff:25},
+      "personnes":{es:"personas",en:"people",freq:80,diff:25},"accumulent":{es:"acumulan",en:"accumulate",freq:50,diff:55},
+      "règles":{es:"reglas",en:"rules",freq:70,diff:35},"strictes":{es:"estrictas",en:"strict",freq:60,diff:45},
+      "lieu":{es:"lugar",en:"place",freq:80,diff:25},"cultiver":{es:"cultivar",en:"cultivate",freq:55,diff:50},
+      "simplicité":{es:"simplicidad",en:"simplicity",freq:55,diff:50},"intérieure":{es:"interior",en:"inner",freq:60,diff:45},
+      "utile":{es:"útil",en:"useful",freq:75,diff:30},"demander":{es:"preguntar",en:"ask",freq:75,diff:30},
+      "vraiment":{es:"realmente",en:"really",freq:80,diff:25},"protéger":{es:"proteger",en:"protect",freq:65,diff:40},
+      "silence":{es:"silencio",en:"silence",freq:70,diff:35},"relations":{es:"relaciones",en:"relationships",freq:70,diff:35},
+      "créativité":{es:"creatividad",en:"creativity",freq:60,diff:45},"sobriété":{es:"sobriedad",en:"sobriety",freq:45,diff:60},
+      "matérielle":{es:"material",en:"material",freq:60,diff:45},"implications":{es:"implicaciones",en:"implications",freq:55,diff:50},
+      "écologiques":{es:"ecológicas",en:"ecological",freq:55,diff:50},"évidentes":{es:"evidentes",en:"obvious",freq:60,diff:45},
+      "moins":{es:"menos",en:"less",freq:90,diff:15},"consommer":{es:"consumir",en:"consume",freq:60,diff:45},
+      "extraire":{es:"extraer",en:"extract",freq:55,diff:50},"jeter":{es:"tirar",en:"throw away",freq:60,diff:45},
+      "geste":{es:"gesto",en:"gesture",freq:65,diff:40},"individuel":{es:"individual",en:"individual",freq:70,diff:35},
+      "limité":{es:"limitado",en:"limited",freq:70,diff:35},"participe":{es:"participa",en:"participates",freq:60,diff:45},
+      "changement":{es:"cambio",en:"change",freq:75,diff:30},"culturel":{es:"cultural",en:"cultural",freq:70,diff:35},
+      "large":{es:"amplio",en:"broad",freq:75,diff:30},"rejoint":{es:"se une",en:"joins",freq:55,diff:50},
+      "questions":{es:"preguntas",en:"questions",freq:80,diff:25},"anciennes":{es:"antiguas",en:"old",freq:65,diff:40},
+      "bonne":{es:"buena",en:"good",freq:90,diff:15},"mesure":{es:"medida",en:"measure",freq:70,diff:35},
+      },
+      en: {
+      // English content
+      "nevertheless":{es:"no obstante",en:"nevertheless",freq:65,diff:55},"consequently":{es:"por consiguiente",en:"consequently",freq:70,diff:50},
+      "furthermore":{es:"además",en:"furthermore",freq:68,diff:48},"although":{es:"aunque",en:"although",freq:85,diff:30},
+      "therefore":{es:"por lo tanto",en:"therefore",freq:78,diff:35},"however":{es:"sin embargo",en:"however",freq:90,diff:25},
+      "artificial":{es:"artificial",en:"artificial",freq:70,diff:35},"intelligence":{es:"inteligencia",en:"intelligence",freq:75,diff:30},
+      "rapidly":{es:"rápidamente",en:"rapidly",freq:70,diff:35},"evolving":{es:"evolucionando",en:"evolving",freq:55,diff:50},
+      "beyond":{es:"más allá de",en:"beyond",freq:70,diff:35},"simple":{es:"simples",en:"simple",freq:85,diff:20},
+      "chatbots":{es:"chatbots",en:"chatbots",freq:55,diff:50},"image":{es:"imagen",en:"image",freq:80,diff:25},
+      "generators":{es:"generadores",en:"generators",freq:55,diff:50},"next":{es:"próxima",en:"next",freq:85,diff:20},
+      "frontier":{es:"frontera",en:"frontier",freq:55,diff:50},"autonomous":{es:"autónomos",en:"autonomous",freq:48,diff:65},
+      "agents":{es:"agentes",en:"agents",freq:65,diff:40},"capable":{es:"capaces",en:"capable",freq:68,diff:35},
+      "planning":{es:"planificación",en:"planning",freq:65,diff:40},"reasoning":{es:"razonamiento",en:"reasoning",freq:55,diff:55},
+      "executing":{es:"ejecutando",en:"executing",freq:50,diff:58},"complex":{es:"complejas",en:"complex",freq:70,diff:35},
+      "tasks":{es:"tareas",en:"tasks",freq:75,diff:30},"minimal":{es:"mínima",en:"minimal",freq:60,diff:40},
+      "human":{es:"humana",en:"human",freq:85,diff:20},"supervision":{es:"supervisión",en:"supervision",freq:58,diff:50},
+      "systems":{es:"sistemas",en:"systems",freq:75,diff:30},"combine":{es:"combinan",en:"combine",freq:70,diff:35},
+      "large":{es:"grandes",en:"large",freq:80,diff:25},"language":{es:"lenguaje",en:"language",freq:80,diff:25},
+      "models":{es:"modelos",en:"models",freq:70,diff:35},"tools":{es:"herramientas",en:"tools",freq:75,diff:30},
+      "memory":{es:"memoria",en:"memory",freq:75,diff:30},"ability":{es:"capacidad",en:"ability",freq:75,diff:30},
+      "break":{es:"dividir",en:"break",freq:70,diff:35},"down":{es:"en",en:"down",freq:85,diff:20},
+      "goals":{es:"objetivos",en:"goals",freq:70,diff:35},"sequential":{es:"secuenciales",en:"sequential",freq:40,diff:70},
+      "steps":{es:"pasos",en:"steps",freq:80,diff:25},"research":{es:"investigar",en:"research",freq:70,diff:35},
+      "topics":{es:"temas",en:"topics",freq:70,diff:35},"write":{es:"escribir",en:"write",freq:80,diff:25},
+      "code":{es:"código",en:"code",freq:75,diff:30},"schedule":{es:"programar",en:"schedule",freq:60,diff:45},
+      "meetings":{es:"reuniones",en:"meetings",freq:70,diff:35},"negotiate":{es:"negociar",en:"negotiate",freq:52,diff:55},
+      "behalf":{es:"en nombre de",en:"behalf",freq:55,diff:50},"users":{es:"usuarios",en:"users",freq:80,diff:25},
+      "power":{es:"poder",en:"power",freq:80,diff:25},"comes":{es:"viene",en:"comes",freq:85,diff:20},
+      "significant":{es:"significativos",en:"significant",freq:65,diff:45},"challenges":{es:"desafíos",en:"challenges",freq:70,diff:40},
+      "ensuring":{es:"asegurando",en:"ensuring",freq:60,diff:45},"remain":{es:"permanezcan",en:"remain",freq:65,diff:40},
+      "aligned":{es:"alineados",en:"aligned",freq:45,diff:60},"intentions":{es:"intenciones",en:"intentions",freq:55,diff:50},
+      "far":{es:"lejos",en:"far",freq:80,diff:25},"trivial":{es:"trivial",en:"trivial",freq:50,diff:55},
+      "researchers":{es:"investigadores",en:"researchers",freq:65,diff:40},"actively":{es:"activamente",en:"actively",freq:60,diff:45},
+      "exploring":{es:"explorando",en:"exploring",freq:60,diff:45},"techniques":{es:"técnicas",en:"techniques",freq:65,diff:40},
+      "such":{es:"tales",en:"such",freq:85,diff:20},"constitutional":{es:"constitucional",en:"constitutional",freq:38,diff:72},
+      "reward":{es:"recompensa",en:"reward",freq:60,diff:45},"modeling":{es:"modelado",en:"modeling",freq:45,diff:60},
+      "runtime":{es:"tiempo de ejecución",en:"runtime",freq:42,diff:65},"monitoring":{es:"monitoreo",en:"monitoring",freq:55,diff:50},
+      "keep":{es:"mantener",en:"keep",freq:85,diff:20},"control":{es:"control",en:"control",freq:80,diff:25},
+      "economic":{es:"económico",en:"economic",freq:72,diff:35},"impact":{es:"impacto",en:"impact",freq:75,diff:30},
+      "could":{es:"podría",en:"could",freq:88,diff:20},"profound":{es:"profundo",en:"profound",freq:50,diff:55},
+      "knowledge":{es:"conocimiento",en:"knowledge",freq:70,diff:35},"workers":{es:"trabajadores",en:"workers",freq:72,diff:30},
+      "roles":{es:"roles",en:"roles",freq:70,diff:30},"transformed":{es:"transformados",en:"transformed",freq:55,diff:50},
+      "routine":{es:"rutinarias",en:"routine",freq:65,diff:40},"cognitive":{es:"cognitivas",en:"cognitive",freq:48,diff:60},
+      "become":{es:"volverse",en:"become",freq:80,diff:25},"automated":{es:"automatizadas",en:"automated",freq:55,diff:52},
+      "same":{es:"mismo",en:"same",freq:90,diff:15},"time":{es:"tiempo",en:"time",freq:92,diff:15},
+      "entirely":{es:"completamente",en:"entirely",freq:60,diff:45},"new":{es:"nuevas",en:"new",freq:95,diff:10},
+      "categories":{es:"categorías",en:"categories",freq:60,diff:45},"jobs":{es:"empleos",en:"jobs",freq:75,diff:30},
+      "will":{es:"van a",en:"will",freq:95,diff:10},"emerge":{es:"surgirán",en:"emerge",freq:60,diff:45},
+      "around":{es:"alrededor de",en:"around",freq:80,diff:25},"design":{es:"diseño",en:"design",freq:75,diff:30},
+      "auditing":{es:"auditoría",en:"auditing",freq:40,diff:65},"fleets":{es:"flotas",en:"fleets",freq:45,diff:60},
+      "technology":{es:"tecnología",en:"technology",freq:75,diff:30},"still":{es:"todavía",en:"still",freq:88,diff:20},
+      "immature":{es:"inmadura",en:"immature",freq:45,diff:58},"progress":{es:"progreso",en:"progress",freq:70,diff:35},
+      "accelerating":{es:"acelerando",en:"accelerating",freq:52,diff:55},"coming":{es:"próximos",en:"coming",freq:75,diff:30},
+      "years":{es:"años",en:"years",freq:90,diff:15},"likely":{es:"probable",en:"likely",freq:70,diff:35},
+      "witness":{es:"presenciar",en:"witness",freq:55,diff:50},"manage":{es:"gestionar",en:"manage",freq:65,diff:40},
+      "entire":{es:"enteros",en:"entire",freq:70,diff:35},"projects":{es:"proyectos",en:"projects",freq:72,diff:30},
+      "question":{es:"pregunta",en:"question",freq:80,diff:25},"longer":{es:"más",en:"longer",freq:75,diff:30},
+      "whether":{es:"si",en:"whether",freq:70,diff:40},"future":{es:"futuro",en:"future",freq:80,diff:25},
+      "arrive":{es:"llegará",en:"arrive",freq:65,diff:40},"how":{es:"cómo",en:"how",freq:92,diff:15},
+      "prepared":{es:"preparados",en:"prepared",freq:72,diff:30},"when":{es:"cuando",en:"when",freq:90,diff:15},
+      "does":{es:"lo haga",en:"does",freq:85,diff:20},"sleep":{es:"sueño",en:"sleep",freq:80,diff:25},
+      "luxury":{es:"lujo",en:"luxury",freq:60,diff:45},"fundamental":{es:"fundamental",en:"fundamental",freq:65,diff:40},
+      "biological":{es:"biológico",en:"biological",freq:55,diff:50},"process":{es:"proceso",en:"process",freq:75,diff:30},
+      "supports":{es:"soporta",en:"supports",freq:65,diff:40},"almost":{es:"casi",en:"almost",freq:85,diff:20},
+      "every":{es:"cada",en:"every",freq:90,diff:15},"system":{es:"sistema",en:"system",freq:80,diff:25},
+      "body":{es:"cuerpo",en:"body",freq:85,diff:20},"during":{es:"durante",en:"during",freq:85,diff:20},
+      "deep":{es:"profundo",en:"deep",freq:75,diff:30},"brain":{es:"cerebro",en:"brain",freq:75,diff:30},
+      "clears":{es:"limpia",en:"clears",freq:60,diff:45},"metabolic":{es:"metabólicos",en:"metabolic",freq:45,diff:60},
+      "waste":{es:"residuos",en:"waste",freq:60,diff:45},"consolidates":{es:"consolida",en:"consolidates",freq:45,diff:60},
+      "memories":{es:"recuerdos",en:"memories",freq:65,diff:40},"regulates":{es:"regula",en:"regulates",freq:55,diff:50},
+      "hormones":{es:"hormonas",en:"hormones",freq:55,diff:50},"control":{es:"controlan",en:"control",freq:80,diff:25},
+      "appetite":{es:"apetito",en:"appetite",freq:55,diff:50},"stress":{es:"estrés",en:"stress",freq:75,diff:30},
+      "modern":{es:"moderna",en:"modern",freq:75,diff:30},"life":{es:"vida",en:"life",freq:90,diff:15},
+      "constantly":{es:"constantemente",en:"constantly",freq:60,diff:45},"undermines":{es:"socava",en:"undermines",freq:45,diff:60},
+      "ability":{es:"capacidad",en:"ability",freq:75,diff:30},"rest":{es:"descansar",en:"rest",freq:80,diff:25},
+      "screens":{es:"pantallas",en:"screens",freq:70,diff:35},"emit":{es:"emiten",en:"emit",freq:55,diff:50},
+      "blue":{es:"azul",en:"blue",freq:80,diff:25},"light":{es:"luz",en:"light",freq:85,diff:20},
+      "suppresses":{es:"suprime",en:"suppresses",freq:45,diff:60},"melatonin":{es:"melatonina",en:"melatonin",freq:45,diff:60},
+      "work":{es:"trabajo",en:"work",freq:90,diff:15},"pressure":{es:"presión",en:"pressure",freq:70,diff:35},
+      "social":{es:"sociales",en:"social",freq:80,diff:25},"obligations":{es:"obligaciones",en:"obligations",freq:60,diff:45},
+      "push":{es:"retrasan",en:"push",freq:70,diff:35},"bedtimes":{es:"horas de dormir",en:"bedtimes",freq:50,diff:55},
+      "later":{es:"más tarde",en:"later",freq:80,diff:25},"result":{es:"resultado",en:"result",freq:80,diff:25},
+      "chronic":{es:"crónica",en:"chronic",freq:55,diff:50},"deprivation":{es:"privación",en:"deprivation",freq:50,diff:55},
+      "widespread":{es:"generalizada",en:"widespread",freq:55,diff:50},"people":{es:"las personas",en:"people",freq:90,diff:15},
+      "experience":{es:"experimentan",en:"experience",freq:70,diff:35},"reduced":{es:"reducida",en:"reduced",freq:70,diff:35},
+      "concentration":{es:"concentración",en:"concentration",freq:65,diff:40},"weaker":{es:"más débiles",en:"weaker",freq:60,diff:45},
+      "immune":{es:"inmunes",en:"immune",freq:55,diff:50},"responses":{es:"respuestas",en:"responses",freq:65,diff:40},
+      "higher":{es:"mayores",en:"higher",freq:80,diff:25},"risks":{es:"riesgos",en:"risks",freq:70,diff:35},
+      "cardiovascular":{es:"cardiovasculares",en:"cardiovascular",freq:45,diff:60},"disease":{es:"enfermedad",en:"disease",freq:70,diff:35},
+      "studies":{es:"estudios",en:"studies",freq:75,diff:30},"show":{es:"muestran",en:"show",freq:85,diff:20},
+      "even":{es:"incluso",en:"even",freq:90,diff:15},"moderate":{es:"moderada",en:"moderate",freq:65,diff:40},
+      "loss":{es:"pérdida",en:"loss",freq:70,diff:35},"impairs":{es:"deteriora",en:"impairs",freq:50,diff:55},
+      "decision-making":{es:"toma de decisiones",en:"decision-making",freq:50,diff:55},"much":{es:"tanto",en:"much",freq:90,diff:15},
+      "alcohol":{es:"alcohol",en:"alcohol",freq:75,diff:30},"catching":{es:"recuperar",en:"catching",freq:60,diff:45},
+      "up":{es:"el",en:"up",freq:90,diff:15},"weekends":{es:"fines de semana",en:"weekends",freq:70,diff:35},
+      "feels":{es:"parece",en:"feels",freq:75,diff:30},"helpful":{es:"útil",en:"helpful",freq:70,diff:35},
+      "does":{es:"no",en:"does",freq:85,diff:20},"fully":{es:"completamente",en:"fully",freq:70,diff:35},
+      "reverse":{es:"revertir",en:"reverse",freq:55,diff:50},"damage":{es:"daño",en:"damage",freq:70,diff:35},
+      "thrives":{es:"prospera",en:"thrives",freq:50,diff:55},"consistency":{es:"constancia",en:"consistency",freq:55,diff:50},
+      "maintaining":{es:"mantener",en:"maintaining",freq:65,diff:40},"regular":{es:"regular",en:"regular",freq:75,diff:30},
+      "schedule":{es:"horario",en:"schedule",freq:70,diff:35},"remains":{es:"sigue siendo",en:"remains",freq:70,diff:35},
+      "most":{es:"más",en:"most",freq:90,diff:15},"effective":{es:"efectivas",en:"effective",freq:70,diff:35},
+      "health":{es:"salud",en:"health",freq:80,diff:25},"interventions":{es:"intervenciones",en:"interventions",freq:50,diff:55},
+      "available":{es:"disponibles",en:"available",freq:75,diff:30},
+      "remote":{es:"remoto",en:"remote",freq:65,diff:40},"permanently":{es:"permanentemente",en:"permanently",freq:55,diff:50},
+      "altered":{es:"alterado",en:"altered",freq:55,diff:50},"relationship":{es:"relación",en:"relationship",freq:75,diff:30},
+      "between":{es:"entre",en:"between",freq:90,diff:15},"employers":{es:"empleadores",en:"employers",freq:60,diff:45},
+      "employees":{es:"empleados",en:"employees",freq:65,diff:40},"began":{es:"comenzó",en:"began",freq:75,diff:30},
+      "emergency":{es:"emergencia",en:"emergency",freq:60,diff:45},"measure":{es:"medida",en:"measure",freq:70,diff:35},
+      "pandemic":{es:"pandemia",en:"pandemic",freq:65,diff:40},"structural":{es:"estructural",en:"structural",freq:55,diff:50},
+      "shift":{es:"cambio",en:"shift",freq:70,diff:35},"organised":{es:"organizado",en:"organized",freq:60,diff:45},
+      "hybrid":{es:"híbrido",en:"hybrid",freq:60,diff:45},"model":{es:"modelo",en:"model",freq:75,diff:30},
+      "presents":{es:"presenta",en:"presents",freq:65,diff:40},"own":{es:"propias",en:"own",freq:85,diff:20},
+      "difficulties":{es:"dificultades",en:"difficulties",freq:65,diff:40},"collaboration":{es:"colaboración",en:"collaboration",freq:60,diff:45},
+      "mentorship":{es:"mentoría",en:"mentorship",freq:45,diff:60},"company":{es:"empresa",en:"company",freq:80,diff:25},
+      "culture":{es:"cultura",en:"culture",freq:75,diff:30},"harder":{es:"más difícil",en:"harder",freq:70,diff:35},
+      "maintain":{es:"mantener",en:"maintain",freq:75,diff:30},"when":{es:"cuando",en:"when",freq:90,diff:15},
+      "teams":{es:"equipos",en:"teams",freq:75,diff:30},"rarely":{es:"rara vez",en:"rarely",freq:65,diff:40},
+      "share":{es:"comparten",en:"share",freq:80,diff:25},"physical":{es:"físico",en:"physical",freq:70,diff:35},
+      "space":{es:"espacio",en:"space",freq:80,diff:25},"organisations":{es:"organizaciones",en:"organizations",freq:60,diff:45},
+      "experimenting":{es:"experimentando",en:"experimenting",freq:55,diff:50},"rituals":{es:"rituales",en:"rituals",freq:55,diff:50},
+      "digital":{es:"digitales",en:"digital",freq:75,diff:30},"office":{es:"oficina",en:"office",freq:75,diff:30},
+      "designs":{es:"diseños",en:"designs",freq:65,diff:40},"encourage":{es:"fomentan",en:"encourage",freq:60,diff:45},
+      "purposeful":{es:"intencional",en:"purposeful",freq:45,diff:60},"presence":{es:"presencia",en:"presence",freq:70,diff:35},
+      "rather":{es:"en lugar de",en:"rather",freq:75,diff:30},"than":{es:"que",en:"than",freq:95,diff:10},
+      "mandatory":{es:"obligatoria",en:"mandatory",freq:55,diff:50},"attendance":{es:"asistencia",en:"attendance",freq:55,diff:50},
+      "rise":{es:"auge",en:"rise",freq:70,diff:35},"accelerating":{es:"acelerando",en:"accelerating",freq:52,diff:55},
+      "change":{es:"cambio",en:"change",freq:85,diff:20},"once":{es:"antes",en:"once",freq:80,diff:25},
+      "required":{es:"requerían",en:"required",freq:70,diff:35},"judgment":{es:"juicio",en:"judgment",freq:60,diff:45},
+      "increasingly":{es:"cada vez más",en:"increasingly",freq:60,diff:45},"forcing":{es:"obligando",en:"forcing",freq:60,diff:45},
+      "focus":{es:"centrarse",en:"focus",freq:75,diff:30},"creativity":{es:"creatividad",en:"creativity",freq:60,diff:45},
+      "empathy":{es:"empatía",en:"empathy",freq:55,diff:50},"problem-solving":{es:"resolución de problemas",en:"problem-solving",freq:50,diff:55},
+      "many":{es:"muchos",en:"many",freq:90,diff:15},"fear":{es:"temen",en:"fear",freq:75,diff:30},
+      "displacement":{es:"desplazamiento",en:"displacement",freq:45,diff:60},"history":{es:"la historia",en:"history",freq:80,diff:25},
+      "suggests":{es:"sugiere",en:"suggests",freq:70,diff:35},"real":{es:"verdadero",en:"real",freq:85,diff:20},
+      "challenge":{es:"desafío",en:"challenge",freq:75,diff:30},"ensuring":{es:"asegurar",en:"ensuring",freq:60,diff:45},
+      "education":{es:"educación",en:"education",freq:75,diff:30},"safety":{es:"seguridad",en:"safety",freq:70,diff:35},
+      "nets":{es:"redes",en:"nets",freq:60,diff:45},"adapt":{es:"se adapten",en:"adapt",freq:65,diff:40},
+      "quickly":{es:"rápidamente",en:"quickly",freq:75,diff:30},"enough":{es:"lo suficiente",en:"enough",freq:85,diff:20}
+      }
+    };
+
+    const KEEP = new Set(["le","la","les","un","une","des","de","du","et","est","sont","dans","pour","avec","sur","qui","que","ne","pas","plus","très","se","ce","cette","ces","il","elle","ils","elles","nous","vous","on","a","au","aux","en","par","ou","mais","si","comme","tout","tous","the","a","an","of","to","and","in","is","are","for","with","on","that","this","it","be","as","at","by","from","or","was","were","have","has","had","do","does","did","will","would","could","should","can","about","into","over","after","before","between","not","only","same","so","than","too","very","just","also","now","even","still","many","much","any","these","those","what","which","who","if","because","while","through","up","down","out","off","again","all","each","more","most","other","some","such","no","own"]);
+
+    // ===================== ONBOARDING =====================
+    function hideAllScreens() {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    }
+    function goToStep(n) {
+      hideAllScreens();
+      const steps = ['welcome','profile','interests','level'];
+      const el = document.getElementById('screen-' + steps[n]);
+      if (el) el.classList.add('active');
+      if (n === 2) renderInterests();
+      // Guardar progreso parcial del onboarding
+      if (state.profile || state.interests.length) saveState();
+    }
+    function selectProfile(el) {
+      document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('selected'));
+      el.classList.add('selected'); state.profile = el.dataset.profile;
+      document.getElementById('btn-profile').disabled = false;
+    }
+    function renderInterests() {
+      document.getElementById('interests-grid').innerHTML = INTERESTS.map(i =>
+        `<div class="interest-chip ${state.interests.includes(i.id)?'selected':''}" data-id="${i.id}" onclick="toggleInterest(this)">${i.label}</div>`
+      ).join('');
+    }
+    function toggleInterest(el) {
+      const id = el.dataset.id;
+      const idx = state.interests.indexOf(id);
+      if (idx>=0) { state.interests.splice(idx,1); el.classList.remove('selected'); }
+      else { state.interests.push(id); el.classList.add('selected'); }
+      document.getElementById('btn-interests').disabled = state.interests.length < 2;
+    }
+    function selectLevel(el) {
+      document.querySelectorAll('.level-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      state.level = el.dataset.level;
+      state.ratio = parseInt(el.dataset.ratio, 10) || 40;
+      const btn = document.getElementById('btn-level');
+      if (btn) btn.disabled = false;
+    }
+    function finishOnboarding() {
+      if (!state.profile || !state.level || state.interests.length < 2) {
+        showToast('Completa todos los pasos del onboarding');
+        return;
+      }
+      updateProfilePill();
+      saveState();
+      showMain('library');
+      showToast('Tu Glóssa está listo');
+    }
+    function resetOnboarding() {
+      state.profile = null; state.level = null; state.interests = []; state.ratio = 40;
+      state.fontFamily = "'Literata', Georgia, serif"; state.fontSize = 18; state.theme = 'light';
+      state.words = {}; state.boards = [{ id: 1, name: 'Guardados', items: [] }];
+      state.wordsRead = 0; state.pagesRead = 0; state._seenPages = null;
+       state._wordCountedPages = null; state._pageTranslations = {}; state._chunkTranslations = {};
+       state.externalBooks = [];
+       safeLocalStorage('remove', STORAGE_KEY);
+      closeSettings(); goToStep(0);
+    }
+
+    // ===================== NAVIGATION =====================
+    function showMain(name) {
+      hideAllScreens();
+      const el = document.getElementById('screen-' + name);
+      if (el) el.classList.add('active');
+      if (name === 'vocab') renderVocab();
+      if (name === 'stats') renderStats();
+      if (name === 'boards') renderBoards();
+      if (name === 'library') {
+        renderUserSummary();
+        renderBooks();
+      }
+    }
+    function goToLibrary() { showMain('library'); }
+    function showScreen(name) {
+      hideAllScreens();
+      const el = document.getElementById('screen-' + name);
+      if (el) el.classList.add('active');
+    }
+    function handleAppBack() {
+      if (document.getElementById('settings-panel')?.classList.contains('open')) {
+        closeSettings();
+        return true;
+      }
+      if (isXRayOpen()) {
+        hideXRay();
+        return true;
+      }
+      if (document.getElementById('screen-reader')?.classList.contains('active')) {
+        goToLibrary();
+        return true;
+      }
+      return false;
+    }
+    // Android/Cordova y Capacitor entregan el botón físico por eventos distintos.
+    document.addEventListener('backbutton', event => {
+      if (handleAppBack()) event.preventDefault();
+    }, false);
+    window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => {
+      handleAppBack();
+    });
+
+    // ===================== LIBRARY / FEED =====================
+    function updateProfilePill() {
+      const map = {A:'A · FR', B:'B · EN', C:'C · Dual'};
+      document.getElementById('current-profile-pill').textContent = map[state.profile]||'—';
+      document.getElementById('settings-profile').textContent = map[state.profile]||'—';
+      document.getElementById('settings-level').textContent = state.level||'—';
+    }
+    function isBookPrepared(book) {
+      if (!book) return false;
+      const pages = paginateBook(book);
+      return pages.length > 0 && pages.every((_, index) =>
+        state._pageTranslations[translationCacheKey(book, index)]?.engineVersion === ENGINE_VERSION &&
+        state._pageTranslations[translationCacheKey(book, index)]?.sentences?.length
+      );
+    }
+    function renderUserSummary() {
+      const known = Object.values(state.words).filter(w=>w.status==='known').length;
+      const learning = Object.values(state.words).filter(w=>w.status==='learning').length;
+      const interestsLabels = state.interests.map(id => INTERESTS.find(i=>i.id===id)?.label||id).slice(0,4).join(' · ');
+      document.getElementById('user-summary').innerHTML = `
+        <strong>${state.profile}</strong> · ${state.level} · Ratio ${state.ratio}%<br>
+        <span style="font-size:0.82rem;color:var(--muted)">${interestsLabels}</span>
+        <div class="stats-row">
+          <div class="stat-pill"><div class="num">${known}</div><div class="lbl">Conocidas</div></div>
+          <div class="stat-pill"><div class="num">${learning}</div><div class="lbl">Aprendiendo</div></div>
+          <div class="stat-pill"><div class="num">${state.pagesRead}</div><div class="lbl">Páginas</div></div>
+        </div>`;
+    }
+    function renderBooks() {
+      // Mapear nivel CEFR a nivel de texto máximo recomendado
+      const maxLevelByUser = { A2: 2, B1: 3, B2: 4, C1: 5 };
+      const maxLvl = maxLevelByUser[state.level] || 5;
+
+      let filtered = allBooks().filter(b => {
+        const interestMatch = !state.interests.length || b.tags.some(t => state.interests.includes(t));
+        if (!interestMatch) return false;
+        if (state.profile === 'A' && b.lang !== 'fr') return false;
+        if (state.profile === 'B' && b.lang !== 'en') return false;
+        // Preferir textos adecuados al nivel (permitir +1 por encima)
+        if (b.level > maxLvl + 1) return false;
+        return true;
+      });
+      if (filtered.length < 2) {
+        filtered = allBooks().filter(b => {
+          if (state.profile === 'A') return b.lang === 'fr';
+          if (state.profile === 'B') return b.lang === 'en';
+          return true;
+        });
+      }
+      // Ordenar: primero los más cercanos al nivel del usuario
+      filtered.sort((a, b) => Math.abs(a.level - maxLvl) - Math.abs(b.level - maxLvl));
+
+      document.getElementById('book-grid').innerHTML = filtered.map(b => {
+        const external = Boolean(b.external);
+        const prepared = !external && isBookPrepared(b);
+        const openAction = external ? `openBook('${esc(b.id)}')` : `openBook(${b.id})`;
+        const action = external
+          ? `event.stopPropagation(); openExternalBook('${esc(b.id)}')`
+          : `prepareBookData(event, ${b.id})`;
+        return `
+        <div class="book-card" onclick="${openAction}">
+          <div class="book-cover level-${b.level}">${b.emoji}<span class="level-tag">N${b.level}</span></div>
+          <div class="book-info"><h4>${esc(b.title)}</h4><div class="book-meta">${esc(b.source)} · ${b.lang.toUpperCase()}</div></div>
+          <div class="book-download ${prepared ? 'ready' : ''}" id="download-book-${b.id}">
+            <button data-download-book="${esc(b.id)}" onclick="${action}">${external ? 'Leer ahora' : (prepared ? '✓ Datos listos' : '↓ Descargar datos')}</button>
+            <span class="download-status">${external ? 'Fuente abierta' : (prepared ? 'Sin espera' : 'No preparada')}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    async function openBook(id) {
+      const book = findBook(id); if (!book) return;
+      if (!book.raw && book.external) {
+        try {
+          await hydrateExternalBook(book);
+        } catch (error) {
+          console.warn('No se pudo cargar la lectura externa:', error);
+          showToast('No se pudo cargar este texto');
+          return;
+        }
+      }
+      state.currentBook = book; state.currentPage = 0; state.parallelOn = false;
+      document.getElementById('btn-parallel').classList.remove('active');
+      showScreen('reader');
+      processBook(book);
+      renderCurrentPage();
+      updateRatioUI();
+      await preparePageTranslation(book);
+    }
+    function loadDemoText() {
+      if (!state.profile) {
+        showToast('Primero completa el onboarding');
+        return;
+      }
+      let book = null;
+      if (state.profile === 'A') {
+        book = BOOKS.find(b => b.lang === 'fr');
+      } else if (state.profile === 'B') {
+        book = BOOKS.find(b => b.lang === 'en');
+      } else {
+        // Dual: priorizar francés, luego inglés
+        book = BOOKS.find(b => b.lang === 'fr') || BOOKS.find(b => b.lang === 'en');
+      }
+      if (!book) book = BOOKS[0];
+      if (book) openBook(book.id);
+      else showToast('No hay textos disponibles para tu perfil');
+    }
+
+    // ===================== OPEN READING SOURCES =====================
+    // Solo se consultan catálogos y textos con acceso público. La aplicación
+    // conserva el enlace y la atribución del proveedor en cada libro externo.
+    const MAX_EXTERNAL_CHARS = 90000;
+    function allBooks() {
+      return BOOKS.concat(state.externalBooks || []);
+    }
+    function findBook(id) {
+      return allBooks().find(book => String(book.id) === String(id));
+    }
+    function setOpenLibraryStatus(message) {
+      const el = document.getElementById('open-library-status');
+      if (el) el.textContent = message || '';
+    }
+    function currentOpenLanguage() {
+      const profileLang = state.profile === 'B' ? 'en' : 'fr';
+      return document.getElementById('open-lang')?.value || profileLang;
+    }
+    function renderOpenResults(books) {
+      const target = document.getElementById('open-library-results');
+      if (!target) return;
+      if (!books.length) {
+        target.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding-top:0.3rem;">No encontré lecturas con esos filtros.</div>';
+        return;
+      }
+      target.innerHTML = books.map(book => `
+        <div class="open-result">
+          <div>
+            <strong>${esc(book.title)}</strong>
+            <small>${esc(book.source)} · ${esc(book.lang.toUpperCase())}${book.external?.lengthLabel ? ` · ${esc(book.external.lengthLabel)}` : ''}</small>
+          </div>
+          <button onclick="openExternalBook('${esc(book.id)}')">Leer</button>
+        </div>
+      `).join('');
+    }
+    function rememberExternalBooks(books) {
+      books.forEach(book => {
+        const index = state.externalBooks.findIndex(item => String(item.id) === String(book.id));
+        if (index >= 0) state.externalBooks[index] = { ...state.externalBooks[index], ...book };
+        else state.externalBooks.push(book);
+      });
+      saveState();
+    }
+    async function searchOpenLibrary() {
+      const button = document.getElementById('open-search-btn');
+      const source = document.getElementById('open-source')?.value || 'wikipedia';
+      const language = currentOpenLanguage();
+      const query = document.getElementById('open-query')?.value.trim() || '';
+      if (button) button.disabled = true;
+      setOpenLibraryStatus('Buscando en la biblioteca abierta…');
+      try {
+        let books = [];
+        if (source === 'gutenberg') books = await searchGutendex(query, language);
+        if (source === 'wikipedia') books = await searchWikipedia(query, language);
+        if (source === 'wikisource') books = await searchWikisource(query, language);
+        rememberExternalBooks(books);
+        renderOpenResults(books);
+        setOpenLibraryStatus(`${books.length} lecturas disponibles · el texto se carga al abrirlo.`);
+      } catch (error) {
+        console.warn('Búsqueda de biblioteca abierta falló:', error);
+        const cached = state.externalBooks.filter(book =>
+          book.lang === language && book.external?.provider === source
+        ).slice(0, 8);
+        renderOpenResults(cached);
+        setOpenLibraryStatus(cached.length
+          ? 'Sin conexión: mostrando lecturas guardadas en este dispositivo.'
+          : 'No se pudo consultar esta fuente ahora. Conéctate a internet para buscar nuevas lecturas.');
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+    function sourceTextUrl(formats, id) {
+      const entries = Object.entries(formats || {});
+      const plain = entries.find(([mime]) => mime.toLowerCase().startsWith('text/plain'));
+      return plain?.[1] || `https://www.gutenberg.org/cache/epub/${id}/pg${id}.txt`;
+    }
+    async function searchGutendex(query, language) {
+      const params = new URLSearchParams({ languages: language });
+      if (query) params.set('search', query);
+      const data = await fetchTranslation(`https://gutendex.com/books?${params.toString()}`);
+      return (data.results || []).slice(0, 8).map(item => ({
+        id: `gutenberg:${item.id}`,
+        title: item.title,
+        source: 'Project Gutenberg',
+        level: 3,
+        lang: language,
+        tags: ['culture', 'history'],
+        emoji: '📚',
+        raw: '',
+        external: {
+          provider: 'gutenberg',
+          textUrl: sourceTextUrl(item.formats, item.id),
+          sourceUrl: `https://www.gutenberg.org/ebooks/${item.id}`,
+          license: 'Project Gutenberg · revisar dominio público según país',
+          lengthLabel: item.download_count ? `${item.download_count.toLocaleString()} descargas` : 'libro'
+        }
+      }));
+    }
+    async function searchWikiProvider(provider, query, language) {
+      const project = provider === 'wikipedia' ? 'wikipedia' : 'wikisource';
+      const searchParams = new URLSearchParams({
+        action: 'query', list: 'search', srsearch: query || (provider === 'wikipedia' ? 'science' : 'literature'),
+        srlimit: '8', format: 'json', origin: '*'
+      });
+      const data = await fetchTranslation(`https://${language}.${project}.org/w/api.php?${searchParams.toString()}`);
+      return (data.query?.search || []).map(item => ({
+        id: `${provider}:${language}:${encodeURIComponent(item.title).replace(/'/g, '%27')}`,
+        title: item.title,
+        source: provider === 'wikipedia' ? 'Wikipedia' : 'Wikisource',
+        level: provider === 'wikipedia' ? 2 : 3,
+        lang: language,
+        tags: ['culture', 'science', 'history'],
+        emoji: provider === 'wikipedia' ? '🌐' : '📜',
+        raw: '',
+        external: {
+          provider,
+          pageTitle: item.title,
+          sourceUrl: `https://${language}.${project}.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+          license: provider === 'wikipedia' ? 'CC BY-SA · Wikimedia' : 'Licencia indicada en la página de Wikisource',
+          lengthLabel: provider === 'wikipedia' ? 'lectura breve' : 'texto clásico'
+        }
+      }));
+    }
+    function searchWikipedia(query, language) {
+      return searchWikiProvider('wikipedia', query, language);
+    }
+    function searchWikisource(query, language) {
+      return searchWikiProvider('wikisource', query, language);
+    }
+    function normalizeExternalText(text) {
+      let clean = String(text || '').replace(/\r/g, '').trim();
+      if (/<(?:html|body|p|div|br)\b/i.test(clean)) {
+        const holder = document.createElement('div');
+        holder.innerHTML = clean;
+        clean = holder.textContent || holder.innerText || '';
+      }
+      const start = clean.search(/\*\*\*\s*START OF[^*]+\*\*\*/i);
+      const end = clean.search(/\*\*\*\s*END OF[^*]+\*\*\*/i);
+      if (start >= 0) clean = clean.slice(clean.indexOf('\n', start) + 1);
+      if (end > 0) clean = clean.slice(0, end);
+      clean = clean.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+      return clean.slice(0, MAX_EXTERNAL_CHARS).trim();
+    }
+    async function fetchWikiText(book) {
+      const language = book.lang;
+      const project = book.external.provider === 'wikipedia' ? 'wikipedia' : 'wikisource';
+      const params = new URLSearchParams({
+        action: 'query', prop: 'extracts', explaintext: '1', exchars: String(MAX_EXTERNAL_CHARS),
+        titles: book.external.pageTitle, format: 'json', origin: '*'
+      });
+      const data = await fetchTranslation(`https://${language}.${project}.org/w/api.php?${params.toString()}`);
+      const page = Object.values(data.query?.pages || {})[0];
+      return normalizeExternalText(page?.extract || '');
+    }
+    async function hydrateExternalBook(book) {
+      if (!book || book.raw) return book;
+      const cached = await readExternalCache(book.id);
+      if (cached) {
+        book.raw = cached;
+        return book;
+      }
+      let raw = '';
+      if (book.external?.provider === 'gutenberg') {
+        raw = normalizeExternalText(await requestResource(book.external.textUrl, 'text', 30000));
+      } else if (book.external?.provider === 'wikipedia' || book.external?.provider === 'wikisource') {
+        raw = await fetchWikiText(book);
+      }
+      if ((raw.match(/\S+/g) || []).length < 30) throw new Error('Texto demasiado corto');
+      book.raw = raw;
+      await writeExternalCache(book.id, raw);
+      return book;
+    }
+    async function openExternalBook(id) {
+      const book = findBook(id);
+      if (!book) return;
+      setOpenLibraryStatus(`Cargando «${book.title}»…`);
+      try {
+        await hydrateExternalBook(book);
+        await openBook(book.id);
+        setOpenLibraryStatus('');
+      } catch (error) {
+        console.warn('Carga de lectura externa falló:', error);
+        showToast('No se pudo cargar este texto. Prueba otra lectura.');
+        setOpenLibraryStatus('La fuente respondió sin texto utilizable.');
+      }
+    }
+
+    // ===================== INTERNET: TRADUCCIÓN GRATIS (sin API key) =====================
+    // Nunca devolvemos el original como si
+    // fuera español: si todos los proveedores fallan, la UI muestra un error.
+    const TRANSLATION_TIMEOUT = 10000;
+    async function fetchTranslation(url) {
+      return requestResource(url, 'json', TRANSLATION_TIMEOUT);
+    }
+
+    function decodeTranslation(value) {
+      const holder = document.createElement('textarea');
+      holder.innerHTML = String(value || '');
+      return holder.value.replace(/\s+/g, ' ').trim();
+    }
+
+    async function googleTranslate(text, targetLang, sourceLang) {
+      const str = String(text || '').trim();
+      if (!str) return '';
+      const source = sourceLang === 'auto' ? 'auto' : (sourceLang === 'en' ? 'en' : 'fr');
+      const target = targetLang === 'en' ? 'en' : 'es';
+      const googleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&q=${encodeURIComponent(str)}`;
+      try {
+        const data = await fetchTranslation(googleUrl);
+        const translated = Array.isArray(data?.[0])
+          ? data[0].map(segment => segment?.[0] || '').join('').trim()
+          : '';
+        if (translated) return translated;
+      } catch (error) {
+        console.warn('Google Translate no disponible:', error);
+      }
+
+      // MyMemory es un respaldo gratuito; su límite evita ráfagas infinitas.
+      const pair = `${source === 'auto' ? 'fr' : source}|${target}`;
+      const memoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(str.slice(0, 480))}&langpair=${pair}`;
+      try {
+        const data = await fetchTranslation(memoryUrl);
+        const translated = decodeTranslation(data?.responseData?.translatedText);
+        if (translated && translated.toLowerCase() !== str.toLowerCase()) return translated;
+      } catch (error) {
+        console.warn('MyMemory no disponible:', error);
+      }
+      throw new Error('No hay un servicio de traducción disponible');
+    }
+
+    // Traduce una palabra dentro de su frase para conservar gramática/contexto.
+    // Esto solo alimenta el X-Ray; nunca decide qué aparece en la lectura.
+    async function translateWordInContext(word, sentence, lang) {
+      const safeSentence = (sentence || word).slice(0, 280);
+      // Marcamos la palabra para intentar recuperarla del resultado
+      const marked = safeSentence.replace(
+        new RegExp(`\\b(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'i'),
+        '⟦$1⟧'
+      );
+      const prompt = lang === 'fr'
+        ? `Traduce al español conservando el sentido gramatical de la frase. Mantén los símbolos ⟦ ⟧ alrededor de la misma palabra traducida:\n${marked}`
+        : `Translate to Spanish preserving grammatical meaning. Keep ⟦ ⟧ around the same translated word:\n${marked}`;
+      try {
+        const t = await googleTranslate(prompt, 'es', lang);
+        const m = t.match(/⟦([^⟧]+)⟧/);
+        if (m && m[1] && m[1].trim().length > 0) return m[1].trim();
+        // Fallback: traducir solo la palabra
+        return await googleTranslate(word, 'es', lang);
+      } catch (_) {
+        return await googleTranslate(word, 'es', lang);
+      }
+    }
+
+    // Traducción real de página completa para el modo paralelo
+    async function getPageTranslation(plainText, lang, cacheKey) {
+      const sentences = await translatePageSentences(plainText, lang, cacheKey);
+      return sentences.map(item => item.translated).join(' ');
+    }
+
+    function splitSentences(text) {
+      return (String(text || '').match(/[^.!?]+(?:[.!?]+|$)/g) || [String(text || '')])
+        .map(sentence => sentence.trim())
+        .filter(Boolean);
+    }
+
+    /*
+     * La traducción híbrida se prepara en dos capas:
+     *   1. traducción completa de la oración (respaldo de sentido);
+     *   2. traducciones de bloques sintácticos no solapados.
+     *
+     * El segundo resultado se valida y se cachea. Por eso el slider no
+     * genera combinaciones nuevas mientras el usuario lee: solo selecciona
+     * una de las diez versiones ya comprobadas del motor.
+     */
+    async function translateChunk(chunk, lang) {
+      const source = String(chunk || '').trim();
+      if (!source) return '';
+      const key = `${lang}:${source.toLowerCase()}`;
+      if (state._chunkTranslations[key]) return state._chunkTranslations[key];
+
+      try {
+        const translated = await googleTranslate(source, 'es', lang);
+        if (translated && translated.toLowerCase() !== source.toLowerCase()) {
+          state._chunkTranslations[key] = translated;
+          return translated;
+        }
+      } catch (error) {
+        console.warn('Traducción de bloque no disponible:', source, error);
+      }
+
+      // Respaldo local limitado: se usa para mantener un bloque completo,
+      // nunca para sustituir palabras sueltas dentro del texto.
+      const words = source.split(/\s+/);
+      const local = words.map(word => {
+        const clean = normalizeLexeme(word);
+        const entry = lookupEntry(clean, lang);
+        return entry?.es || null;
+      });
+      if (local.every(Boolean)) {
+        const fallback = restoreTokenPunctuation(source, local.join(' '));
+        if (fallback && fallback.toLowerCase() !== source.toLowerCase()) {
+          state._chunkTranslations[key] = fallback;
+          return fallback;
+        }
+      }
+      return '';
+    }
+
+    function buildDualParseRecord(source, translated, lang, blocks) {
+      const target = parsePhraseBoundaries(translated, 'es');
+      return {
+        parser: 'heuristic-dual-v1',
+        sourceLanguage: lang,
+        targetLanguage: 'es',
+        source: blocks.map(block => ({
+          kind: block.kind,
+          risk: block.risk,
+          source: block.source
+        })),
+        target,
+        alignment: blocks.map((block, index) => ({
+          sourceIndex: index,
+          targetIndex: Math.min(index, Math.max(0, target.length - 1)),
+          strategy: block.bridge ? 'bridge' : 'ordinal-chunk'
+        }))
+      };
+    }
+
+    async function buildValidatedSentence(source, translated, lang) {
+      const blocks = parseSyntacticChunks(source, lang);
+      let allTranslated = true;
+      for (const block of blocks) {
+        if (block.bridge) {
+          block.translation = await translateChunk(block.source, lang);
+        } else {
+          block.translation = await translateChunk(block.source, lang);
+        }
+        block.validated = validateChunk(block);
+        if (!block.translation) allTranslated = false;
+      }
+
+      const eligible = blocks
+        .map((block, index) => ({ block, index }))
+        .filter(item => item.block.validated && !item.block.bridge);
+      const levels = {};
+      MIX_LEVELS.forEach(level => {
+        const allowed = eligible.filter(item => item.block.risk <= level.maxRisk);
+        const count = level.ratio >= 100
+          ? allowed.length
+          : Math.round(allowed.length * level.targetQuota);
+        levels[level.ratio] = {
+          label: level.label,
+          activeBlocks: allowed.slice(0, count).map(item => item.index),
+          valid: level.ratio === 0 || level.ratio === 100 || (allTranslated && blocks.length > 0)
+        };
+      });
+
+      return {
+        source,
+        translated,
+        blocks,
+        levels,
+        dualParse: buildDualParseRecord(source, translated, lang, blocks),
+        valid: allTranslated && blocks.length > 0
+      };
+    }
+
+    async function translatePageSentences(plainText, lang, cacheKey) {
+      const cached = state._pageTranslations[cacheKey];
+      if (cached?.engineVersion === ENGINE_VERSION && cached?.sentences?.length) return cached.sentences;
+      const sourceSentences = splitSentences(plainText);
+      const translated = [];
+      for (const sentence of sourceSentences) {
+        const spanish = await googleTranslate(sentence, 'es', lang);
+        translated.push(await buildValidatedSentence(sentence, spanish, lang));
+        // Respetar el límite de los servicios públicos y evitar ráfagas.
+        await new Promise(resolve => setTimeout(resolve, 90));
+      }
+      state._pageTranslations[cacheKey] = {
+        sentences: translated,
+        lang,
+        engineVersion: ENGINE_VERSION,
+        createdAt: Date.now()
+      };
+      saveState();
+      return translated;
+    }
+
+    async function translateCachedPage(book, pageIndex, pages) {
+      const cacheKey = translationCacheKey(book, pageIndex);
+      const cached = state._pageTranslations[cacheKey];
+      if (cached?.engineVersion === ENGINE_VERSION && cached?.sentences?.length) return cached.sentences;
+      if (translationInflight.has(cacheKey)) return translationInflight.get(cacheKey);
+      const task = translatePageSentences(pages[pageIndex] || '', book.lang, cacheKey);
+      translationInflight.set(cacheKey, task);
+      try {
+        return await task;
+      } finally {
+        translationInflight.delete(cacheKey);
+      }
+    }
+
+    async function preparePageTranslation(book) {
+      if (!book || state.ratio >= 100) return;
+      const pageIndex = state.currentPage;
+      const requestId = ++state._translationRequest;
+      const pages = state.rawPages;
+      try {
+        await translateCachedPage(book, pageIndex, pages);
+        if (requestId === state._translationRequest &&
+            state.currentBook?.id === book.id &&
+            state.currentPage === pageIndex) {
+          processBook(book);
+          renderCurrentPage();
+        }
+      } catch (error) {
+        console.warn('Traducción de página falló:', error);
+        if (requestId === state._translationRequest &&
+            state.currentBook?.id === book.id &&
+            state.currentPage === pageIndex) {
+          renderCurrentPage('No se pudo traducir esta página. Comprueba tu conexión.');
+        }
+      }
+    }
+
+    function updateBookDownloadUI(book, completed, total, message, ready = false) {
+      const box = document.getElementById(`download-book-${book.id}`);
+      if (!box) return;
+      const button = box.querySelector('[data-download-book]');
+      const status = box.querySelector('.download-status');
+      box.classList.toggle('ready', ready);
+      if (button) {
+        button.disabled = !ready && Boolean(state._downloadTasks[book.id]);
+        button.textContent = ready ? '✓ Datos listos' : (state._downloadTasks[book.id] ? 'Descargando…' : '↻ Reintentar');
+      }
+      if (status) status.textContent = message || `${completed}/${total} páginas`;
+    }
+
+    async function prepareBookData(event, id) {
+      event?.stopPropagation();
+      const book = findBook(id);
+      if (!book || state._downloadTasks[id]) return;
+      const pages = paginateBook(book);
+      if (isBookPrepared(book)) {
+        updateBookDownloadUI(book, pages.length, pages.length, 'Sin espera', true);
+        showToast('Esta lectura ya está preparada');
+        return;
+      }
+
+      state._downloadTasks[id] = true;
+      let completed = 0;
+      updateBookDownloadUI(book, 0, pages.length, `0/${pages.length} páginas`);
+      try {
+        for (let index = 0; index < pages.length; index++) {
+          await translateCachedPage(book, index, pages);
+          completed++;
+          updateBookDownloadUI(book, completed, pages.length, `${completed}/${pages.length} páginas`);
+        }
+        saveState();
+        updateBookDownloadUI(book, pages.length, pages.length, 'Sin espera', true);
+        showToast(`«${book.title}» está lista para leer`);
+      } catch (error) {
+        console.warn('Preparación de lectura falló:', error);
+        updateBookDownloadUI(book, completed, pages.length, `Falló en ${completed + 1}/${pages.length}`);
+        showToast('No se pudo preparar toda la lectura. Puedes reintentarlo.');
+      } finally {
+        delete state._downloadTasks[id];
+        const ready = isBookPrepared(book);
+        updateBookDownloadUI(book, ready ? pages.length : completed, pages.length, ready ? 'Sin espera' : `Guardadas ${completed}/${pages.length}`, ready);
+      }
+    }
+
+    // ===================== BOARDS =====================
+    function renderBoards() {
+      const list = document.getElementById('boards-list');
+      list.innerHTML = state.boards.map(b => {
+        const titles = b.items.map(id => {
+          const book = findBook(id);
+          return book ? book.title : ('Texto #' + id);
+        });
+        const preview = titles.length
+          ? titles.slice(0, 3).map(t => `<div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem;">• ${esc(t)}</div>`).join('') +
+            (titles.length > 3 ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem;">+${titles.length - 3} más</div>` : '')
+          : `<div style="font-size:0.78rem;color:var(--muted);margin-top:0.25rem;">Vacío</div>`;
+        return `
+        <div class="board-card" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+            <div><h4>${esc(b.name)}</h4><div class="count">${b.items.length} texto${b.items.length !== 1 ? 's' : ''}</div></div>
+            <div class="board-actions">
+              <button class="icon-btn" onclick="event.stopPropagation(); renameBoard(${b.id})">✏️</button>
+            </div>
+          </div>
+          <div style="margin-top:0.45rem;">${preview}</div>
+        </div>`;
+      }).join('') + `
+        <button class="btn-primary" style="margin-top:1rem;" onclick="createBoard()">＋ Nuevo tablero</button>`;
+    }
+    function createBoard() {
+      const name = prompt('Nombre del tablero:');
+      if (!name || !name.trim()) return;
+      state.boards.push({ id: Date.now(), name: name.trim(), items: [] });
+      saveState();
+      renderBoards();
+      showToast('Tablero creado');
+    }
+    function renameBoard(id) {
+      const b = state.boards.find(x=>x.id===id); if (!b) return;
+      const name = prompt('Nuevo nombre:', b.name); if (!name) return;
+      b.name = name.trim(); saveState(); renderBoards();
+    }
+    function saveToBoard() {
+      if (!state.currentBook) return;
+      // Simple visual chooser via prompt fallback + better message
+      // (Full modal would be ideal; this is safer than raw number)
+      const names = state.boards.map(b => b.name);
+      const choice = prompt(
+        `Guardar «${state.currentBook.title}» en uno de estos tableros:\n\n` +
+        names.map((n, i) => `${i + 1}. ${n}`).join('\n') +
+        `\n\nEscribe el nombre o el número:`
+      );
+      if (!choice) return;
+      let board = state.boards.find(b => b.name.toLowerCase() === choice.trim().toLowerCase());
+      if (!board) {
+        const idx = parseInt(choice, 10) - 1;
+        if (!isNaN(idx) && state.boards[idx]) board = state.boards[idx];
+      }
+      if (!board) {
+        showToast('Tablero no encontrado');
+        return;
+      }
+      if (!board.items.includes(state.currentBook.id)) {
+        board.items.push(state.currentBook.id);
+        saveState();
+        showToast(`Guardado en «${board.name}»`);
+      } else {
+        showToast('Ya está en ese tablero');
+      }
+    }
+
+    // ===================== VOCAB / FLASHCARDS =====================
+    function getWordStatus(word) {
+      return state.words[word]?.status || 'new';
+    }
+    function markWord(word, status, context='', trans='') {
+      if (!state.words[word]) {
+        state.words[word] = { status, seen: 1, context, trans, added: Date.now() };
+      } else {
+        state.words[word].status = status;
+        state.words[word].seen = (state.words[word].seen || 0) + 1;
+        if (context) state.words[word].context = context;
+        if (trans) state.words[word].trans = trans;
+      }
+      // Umbral según nivel: A2 necesita más repeticiones, C1 menos
+      const thresholds = { A2: 6, B1: 4, B2: 3, C1: 2 };
+      const threshold = thresholds[state.level] || 4;
+      const seen = state.words[word].seen;
+      if ((status === 'learning' || state.words[word].status === 'learning') && seen >= threshold) {
+        state.words[word].status = 'known';
+      }
+      renderUserSummary();
+      saveState();
+    }
+    function renderVocab(filter='all') {
+      const list = document.getElementById('vocab-list');
+      const area = document.getElementById('flashcard-area');
+      area.style.display = 'none'; list.style.display = 'block';
+      let entries = Object.entries(state.words);
+      if (filter==='learning') entries = entries.filter(([,v])=>v.status==='learning');
+      if (filter==='known') entries = entries.filter(([,v])=>v.status==='known');
+      if (!entries.length) {
+        list.innerHTML = `<p style="color:var(--muted);text-align:center;padding:2rem 0;">Aún no has guardado palabras.<br>Toca palabras en el lector para añadirlas.</p>`;
+        return;
+      }
+      const metaLabel = state.profile === 'B' ? 'EN' : state.profile === 'C' ? 'FR/EN' : 'FR';
+      list.innerHTML = entries.sort((a,b)=>b[1].added-a[1].added).map(([w,v]) => `
+        <div class="vocab-item">
+          <div>
+            <div class="word">${esc(w)} <span style="font-size:0.7rem;color:var(--muted);font-weight:500;">${metaLabel}</span></div>
+            <div class="trans">ES: ${esc(v.trans || '—')}</div>
+          </div>
+          <span class="status-badge ${v.status}">${v.status==='known'?'Conocida':v.status==='learning'?'Aprendiendo':'Nueva'}</span>
+        </div>`).join('');
+    }
+    function filterVocab(f) {
+      document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active', c.dataset.f===f));
+      renderVocab(f);
+    }
+    function startReview() {
+      const learning = Object.entries(state.words).filter(([,v])=>v.status==='learning'||v.status==='known');
+      if (!learning.length) { showToast('No hay palabras para repasar'); return; }
+      state.reviewQueue = learning.sort(()=>Math.random()-0.5);
+      state.reviewIndex = 0;
+      document.getElementById('vocab-list').style.display = 'none';
+      document.getElementById('flashcard-area').style.display = 'block';
+      showFlashcard();
+    }
+    function showFlashcard() {
+      if (state.reviewIndex >= state.reviewQueue.length) {
+        showToast('¡Repaso completado!'); stopReview(); return;
+      }
+      const [w, v] = state.reviewQueue[state.reviewIndex];
+      document.getElementById('fc-word').textContent = w;
+      document.getElementById('fc-context').textContent = v.context ? `«${v.context}»` : '';
+      document.getElementById('fc-trans').textContent = v.trans || w;
+      document.getElementById('fc-context-back').textContent = v.context ? `«${v.context}»` : '';
+      document.getElementById('flashcard').classList.remove('flipped');
+    }
+    function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+    function reviewCard(result) {
+      const [w] = state.reviewQueue[state.reviewIndex];
+      if (result==='easy') markWord(w, 'known');
+      else if (result==='good') markWord(w, 'learning');
+      else markWord(w, 'learning');
+      state.reviewIndex++;
+      showFlashcard();
+    }
+    function stopReview() {
+      document.getElementById('flashcard-area').style.display = 'none';
+      document.getElementById('vocab-list').style.display = 'block';
+      renderVocab();
+    }
+
+    // ===================== STATS =====================
+    function renderStats() {
+      const known = Object.values(state.words).filter(w=>w.status==='known').length;
+      const learning = Object.values(state.words).filter(w=>w.status==='learning').length;
+       const total = Object.keys(state.words).length;
+       const level = getMixLevel(state.ratio);
+      document.getElementById('stats-content').innerHTML = `
+        <div class="user-summary">
+          <strong>Resumen de exposición</strong>
+          <div class="stats-row" style="margin-top:0.8rem;">
+            <div class="stat-pill"><div class="num">${state.pagesRead}</div><div class="lbl">Páginas leídas</div></div>
+            <div class="stat-pill"><div class="num">${state.wordsRead}</div><div class="lbl">Palabras expuestas</div></div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-pill"><div class="num">${known}</div><div class="lbl">Conocidas</div></div>
+            <div class="stat-pill"><div class="num">${learning}</div><div class="lbl">Aprendiendo</div></div>
+            <div class="stat-pill"><div class="num">${total}</div><div class="lbl">Total tocadas</div></div>
+          </div>
+        </div>
+         <div class="section-label">Nivel de mezcla validado</div>
+         <p style="margin-bottom:1rem;">Estás leyendo con un <strong>${level.ratio}%</strong> de idioma meta:
+         <strong>${esc(level.label)}</strong>.
+        ${state.ratio < 50 ? 'Sigue subiendo el seguimiento cuando te sientas cómodo.' : '¡Buen nivel de inmersión!'}</p>
+        <div class="section-label">Consejo</div>
+         <p style="color:var(--muted);font-size:0.9rem;">La lectura se mezcla por bloques sintácticos completos. El slider salta entre niveles previamente validados; las frases en español no son interactivas y los bloques del idioma meta sí se pueden tocar para verlos en contexto.</p>
+      `;
+    }
+
+    // ===================== SCAFFOLDING ENGINE =====================
+    const ENGINE_VERSION = 2;
+    const MIX_LEVELS = [
+      { ratio: 0,   label: 'Solo español', maxRisk: 0, targetQuota: 0 },
+      { ratio: 10,  label: 'Sustantivos y bloques nominales', maxRisk: 1, targetQuota: 0.20 },
+      { ratio: 20,  label: 'Bloques nominales ampliados', maxRisk: 1, targetQuota: 0.38 },
+      { ratio: 30,  label: 'Verbos simples', maxRisk: 2, targetQuota: 0.50 },
+      { ratio: 40,  label: 'Frases verbales', maxRisk: 2, targetQuota: 0.64 },
+      { ratio: 50,  label: 'Adjetivos y adverbios', maxRisk: 3, targetQuota: 0.74 },
+      { ratio: 60,  label: 'Cláusulas cortas', maxRisk: 3, targetQuota: 0.84 },
+      { ratio: 70,  label: 'Frases preposicionales', maxRisk: 4, targetQuota: 0.90 },
+      { ratio: 80,  label: 'Subordinadas controladas', maxRisk: 4, targetQuota: 0.95 },
+      { ratio: 90,  label: 'Casi todo el idioma meta', maxRisk: 5, targetQuota: 0.98 },
+      { ratio: 100, label: 'Idioma meta completo', maxRisk: 5, targetQuota: 1 }
+    ];
+
+    function snapRatio(value) {
+      const number = Math.max(0, Math.min(100, Number(value) || 0));
+      return MIX_LEVELS.reduce((best, level) =>
+        Math.abs(level.ratio - number) < Math.abs(best.ratio - number) ? level : best
+      ).ratio;
+    }
+    function getMixLevel(value = state.ratio) {
+      const ratio = snapRatio(value);
+      return MIX_LEVELS.find(level => level.ratio === ratio) || MIX_LEVELS[0];
+    }
+
+    function paginateBook(book) {
+      const raw = String(book?.raw || '').trim();
+      if (!raw) return [];
+      const sentences = raw.match(/[^.!?]+[.!?]+/g) || [raw];
+      const pages = []; let current = []; let wordCount = 0;
+      sentences.forEach(s => {
+        const words = s.trim().split(/\s+/).length;
+        if (wordCount + words > 160 && current.length) { pages.push(current.join(' ')); current=[]; wordCount=0; }
+        current.push(s.trim()); wordCount += words;
+      });
+      if (current.length) pages.push(current.join(' '));
+      return pages;
+    }
+    function processBook(book) {
+      const pages = paginateBook(book);
+      state.rawPages = pages;
+      // `pages` representa la paginación, no una mezcla que haya que
+      // recalcular con cada movimiento del slider.
+      state.pages = pages;
+    }
+
+    function normalizeLexeme(value) {
+      return String(value || '')
+        .toLowerCase()
+        .replace(/^[^a-zà-ÿ0-9]+|[^a-zà-ÿ0-9'-]+$/gi, '');
+    }
+    function restoreTokenPunctuation(source, translated) {
+      const leading = String(source).match(/^[^a-zà-ÿ0-9]+/i)?.[0] || '';
+      const trailing = String(source).match(/[^a-zà-ÿ0-9]+$/i)?.[0] || '';
+      return leading + String(translated || '').replace(/\s+([,.;:!?])/g, '$1').trim() + trailing;
+    }
+    function cleanChunkSpacing(value) {
+      return String(value || '')
+        .replace(/\s+([,.;:!?])/g, '$1')
+        .replace(/([¿¡])\s+/g, '$1')
+        .replace(/\s+([’'])/g, '$1')
+        .trim();
+    }
+
+    function parsePhraseBoundaries(text) {
+      return String(text || '')
+        .split(/[,:;.!?]+|\s+(?:y|and|pero|but|aunque|although|sin embargo|however)\s+/i)
+        .map(part => part.trim())
+        .filter(Boolean);
+    }
+
+    function isBoundaryWord(word) {
+      return /[.!?;,:]$/.test(word.raw) || isConjunction(word.clean);
+    }
+    function isConjunction(word) {
+      return new Set([
+        'and','or','but','while','although','however','because','so','than',
+        'y','o','pero','mientras','aunque','porque','sino','que','et','ou',
+        'mais','tandis','bien','que','car'
+      ]).has(word);
+    }
+    function isPreposition(word, lang) {
+      const fr = new Set(['à','au','aux','de','du','des','dans','en','par','pour','sur','sous','avec','vers','entre','sans','chez']);
+      const en = new Set(['to','of','in','on','for','with','from','by','at','into','over','between','around','during','after','before','beyond']);
+      return (lang === 'en' ? en : fr).has(word);
+    }
+    function isDeterminer(word, lang) {
+      const fr = new Set(['le','la','les','un','une','des','du','ce','cette','ces','mon','ma','mes','notre','nos','leur','leurs','quelques','beaucoup']);
+      const en = new Set(['the','a','an','this','that','these','those','my','our','their','some','many','each','every']);
+      return (lang === 'en' ? en : fr).has(word) || /^(l'|d'|j'|t'|qu')/.test(word);
+    }
+    function isLikelyVerb(word, lang) {
+      const common = lang === 'en'
+        ? new Set(['is','are','was','were','be','have','has','had','do','does','can','could','will','would','must','may','might','become','remain','show','make','use','support','keep','help','read','write','work','learn','shape','wait','return','emerge','manage'])
+        : new Set(['est','sont','a','ont','être','avoir','faire','joue','se','continue','domine','s’accordent','s\'accordent','dire','exige','représentent','doivent','accélérer','construire','moderniser','stocker','apparaissent','restent','dépendra','innover','coopérer','chercher','cherche','trouver','donner','donnent','permet','deviennent','commencez']);
+      if (common.has(word)) return true;
+      return lang === 'en'
+        ? /(ing|ed|es|s)$/.test(word) && word.length > 4
+        : /(er|ir|re|ent|ez|ons|ait|aient|ées|és|ée|ant)$/.test(word) && word.length > 4;
+    }
+    function isContentWord(word) {
+      return Boolean(word) && word.length > 1 && !KEEP.has(word) && !isConjunction(word);
+    }
+
+    /*
+     * Parser ligero de constituyentes. En un documento de producción este
+     * punto puede reemplazarse por un parser de dependencias; su contrato ya
+     * está separado: entrega bloques contiguos, no palabras candidatas.
+     */
+    function parseSyntacticChunks(text, lang) {
+      const parts = String(text || '').match(/\s+|[^\s]+/g) || [];
+      const words = parts
+        .map((raw, partIndex) => ({
+          raw,
+          partIndex,
+          clean: normalizeLexeme(raw)
+        }))
+        .filter(item => /[a-zà-ÿ0-9]/i.test(item.clean));
+      if (!words.length) return [];
+
+      const candidates = [];
+      for (let start = 0; start < words.length; start++) {
+        const current = words[start].clean;
+        let end = start;
+        let kind = '';
+        let risk = 5;
+
+        if (isDeterminer(current, lang)) {
+          kind = 'noun_phrase'; risk = 1;
+          while (end + 1 < words.length && end - start < 6) {
+            const next = words[end + 1].clean;
+            if (isBoundaryWord(words[end + 1]) || isPreposition(next, lang) || isLikelyVerb(next, lang)) break;
+            end++;
+          }
+        } else if (isLikelyVerb(current, lang)) {
+          kind = 'verb_phrase'; risk = 2;
+          while (end + 1 < words.length && end - start < 6) {
+            const next = words[end + 1].clean;
+            if (isBoundaryWord(words[end + 1]) || isConjunction(next) || isPreposition(next, lang)) break;
+            end++;
+          }
+        } else if (isPreposition(current, lang)) {
+          kind = 'prepositional_phrase'; risk = 4;
+          while (end + 1 < words.length && end - start < 6) {
+            const next = words[end + 1].clean;
+            if (isBoundaryWord(words[end + 1]) || isConjunction(next)) break;
+            end++;
+          }
+        } else if (isContentWord(current) && start + 1 < words.length && isContentWord(words[start + 1].clean)) {
+          kind = 'noun_phrase'; risk = 1;
+          end = Math.min(words.length - 1, start + 1);
+          while (end + 1 < words.length && end - start < 3 && isContentWord(words[end + 1].clean)) end++;
+        }
+
+        // Una palabra aislada nunca es una unidad de sustitución.
+        if (kind && end > start) {
+          candidates.push({ start, end, kind, risk, bridge: false });
+        }
+      }
+
+      const selected = [];
+      let cursor = 0;
+      while (cursor < words.length) {
+        const options = candidates
+          .filter(candidate => candidate.start === cursor)
+          .sort((a, b) => (b.end - b.start) - (a.end - a.start) || a.risk - b.risk);
+        if (options.length) {
+          selected.push(options[0]);
+          cursor = options[0].end + 1;
+          continue;
+        }
+        const nextStart = candidates
+          .filter(candidate => candidate.start > cursor)
+          .reduce((min, candidate) => Math.min(min, candidate.start), words.length);
+        selected.push({ start: cursor, end: nextStart - 1, kind: 'bridge', risk: 5, bridge: true });
+        cursor = nextStart;
+      }
+
+      const toText = (start, end) => {
+        const first = words[start];
+        const last = words[end];
+        return cleanChunkSpacing(parts.slice(first.partIndex, last.partIndex + 1).join(''));
+      };
+      return selected.map(chunk => ({
+        ...chunk,
+        source: toText(chunk.start, chunk.end),
+        translation: '',
+        validated: false
+      }));
+    }
+
+    function validateChunk(block) {
+      const source = cleanChunkSpacing(block.source);
+      const translation = cleanChunkSpacing(block.translation);
+      if (!source || !translation || translation.toLowerCase() === source.toLowerCase()) return false;
+      if (/[⟦⟧\[\]]/.test(translation)) return false;
+      const sourceWords = source.split(/\s+/).filter(Boolean).length;
+      const targetWords = translation.split(/\s+/).filter(Boolean).length;
+      if (!block.bridge && sourceWords < 2) return false;
+      if (targetWords < 1 || targetWords > Math.max(10, sourceWords * 4)) return false;
+      if (!boundaryCompatible(block.kind, translation)) return false;
+      return true;
+    }
+    function boundaryCompatible(kind, translation) {
+      const words = cleanChunkSpacing(translation)
+        .toLowerCase()
+        .replace(/[¿¡]/g, '')
+        .split(/\s+/)
+        .filter(Boolean);
+      if (!words.length) return false;
+      const first = words[0].replace(/^[^a-záéíóúüñ]+/i, '');
+      const last = words[words.length - 1].replace(/[^a-záéíóúüñ]+$/i, '');
+      const functionWords = new Set(['a','al','ante','bajo','con','contra','de','del','desde','en','entre','hacia','para','por','sin','sobre','tras','y','o','que','si']);
+      if (kind !== 'bridge' && functionWords.has(last)) return false;
+      if (kind === 'noun_phrase' && functionWords.has(first) &&
+          !new Set(['a','al']).has(first)) return false;
+      if (kind === 'verb_phrase' && functionWords.has(first) &&
+          !new Set(['se','lo','la','los','las']).has(first)) return false;
+      return true;
+    }
+
+    // ----- Lookup + lematización -----
+    function stemFr(w) {
+      let s = String(w || '').toLowerCase();
+      const suf = ['issements','issement','ations','ation','ements','ement','euses','euse','eurs','eur','iques','ique','ables','able','ières','ière','ments','ment','tions','tion','ances','ance','ences','ence','ités','ité','ives','ive','eaux','aux','antes','ante','ants','ant','ées','és','ée','er','ir','re','ais','ait','ions','iez','aient','ons','ez','ent'];
+      for (const x of suf) {
+        if (s.length > x.length + 2 && s.endsWith(x)) { s = s.slice(0, -x.length); break; }
+      }
+      if (s.endsWith('s') && s.length > 3) s = s.slice(0, -1);
+      return s;
+    }
+    function stemEn(w) {
+      let s = String(w || '').toLowerCase();
+      if (s.endsWith('ies') && s.length > 4) return s.slice(0, -3) + 'y';
+      if (s.endsWith('ing') && s.length > 5) return s.slice(0, -3);
+      if (s.endsWith('ed') && s.length > 4) return s.slice(0, -2);
+      if (s.endsWith('es') && s.length > 4) return s.slice(0, -2);
+      if (s.endsWith('s') && s.length > 3) return s.slice(0, -1);
+      return s;
+    }
+    function lookupEntry(word, lang) {
+      const clean = normalizeLexeme(word);
+      if (!clean || clean.length < 2) return null;
+      const L = (lang === 'en') ? 'en' : 'fr';
+      // 1) Diccionario base
+      if (DICT[L] && DICT[L][clean] && DICT[L][clean].es) return DICT[L][clean];
+      // 2) Vocabulario generado / importado
+      // 3) Lema / stem
+      const stem = L === 'en' ? stemEn(clean) : stemFr(clean);
+      if (stem !== clean) {
+        if (DICT[L] && DICT[L][stem] && DICT[L][stem].es) {
+          return { ...DICT[L][stem], freq: (DICT[L][stem].freq || 50) - 5, diff: (DICT[L][stem].diff || 50) + 5 };
+        }
+      }
+      return null;
+    }
+
+    function decorateTargetText(text, lang, context = text) {
+      const tokens = String(text || '').split(/(\s+)/);
+      return tokens.map(token => {
+        if (/^\s+$/.test(token)) return token;
+        const clean = normalizeLexeme(token);
+        const data = lookupEntry(clean, lang);
+        if (!clean || !data) return esc(token);
+        const attrs = `data-original="${esc(clean)}" data-es="${esc(data.es || '')}" data-en="${esc(data.en || '')}" data-lang="${esc(lang)}" data-freq="${data.freq || 40}" data-context="${esc(context)}"`;
+        const status = getWordStatus(clean);
+        const klass = status === 'known' ? 'scaffold known-word' : status === 'learning' ? 'scaffold learning-word' : 'scaffold';
+        return `<span class="${klass}" ${attrs} onclick="showXRay(event,this)">${esc(token)}</span>`;
+      }).join('');
+    }
+    function applyScaffolding(text, lang) {
+      return decorateTargetText(text, lang, text);
+    }
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Safer: build X-Ray with DOM methods instead of raw HTML strings where possible
+    function setText(el, text) { el.textContent = text; }
+
+    const translationInflight = new Map();
+    function translationCacheKey(book, pageIndex) {
+      return `${book?.id ?? 'x'}:${pageIndex}:${book?.lang || 'fr'}`;
+    }
+
+    function renderValidatedSentence(model, level, lang) {
+      if (!model) return '';
+      if (level.ratio === 0) return esc(model.translated || model.source);
+      if (level.ratio === 100) return decorateTargetText(model.source, lang, model.source);
+
+      const preparedLevel = model.levels?.[level.ratio];
+      if (!model.valid || !preparedLevel?.valid) {
+        // La seguridad pedagógica gana: una oración no validada se muestra
+        // completa en español, nunca como mezcla parcial improvisada.
+        return esc(model.translated || model.source);
+      }
+      const active = new Set(preparedLevel.activeBlocks || []);
+      const html = model.blocks.map((block, index) => {
+        const useTarget = active.has(index);
+        const display = useTarget ? block.source : block.translation;
+        if (!display) return '';
+        if (!useTarget) {
+          return `<span class="hybrid-block ${block.bridge ? 'bridge-block' : 'scaffold-es'}">${esc(display)}</span>`;
+        }
+        const attrs = `data-original="${esc(block.source)}" data-es="${esc(block.translation)}" data-en="" data-lang="${esc(lang)}" data-freq="40" data-context="${esc(model.source)}" data-chunk-kind="${esc(block.kind)}"`;
+        return `<span class="hybrid-block target-block" ${attrs} onclick="showXRay(event,this)">${esc(display)}</span>`;
+      }).join(' ');
+      return html || esc(model.translated || model.source);
+    }
+
+    function buildHybridPage(book, pageIndex) {
+      const cache = state._pageTranslations[translationCacheKey(book, pageIndex)];
+      if (cache?.engineVersion !== ENGINE_VERSION || !cache?.sentences?.length) return '';
+      const level = getMixLevel(state.ratio);
+      return cache.sentences.map(model =>
+        `<span class="hybrid-sentence">${renderValidatedSentence(model, level, book.lang)}</span>`
+      ).join(' ');
+    }
+
+    // ===================== READER =====================
+    function renderCurrentPage(translationError = '') {
+      const content = document.getElementById('page-content');
+      const book = state.currentBook;
+      const rawPage = state.rawPages[state.currentPage] || '';
+      const cacheKey = translationCacheKey(book, state.currentPage);
+      let page = '';
+      page = buildHybridPage(book, state.currentPage);
+      if (!page && state.ratio >= 100) {
+        page = applyScaffolding(rawPage, book.lang);
+      } else if (!page) {
+        page = `<span class="translation-placeholder">${esc(
+          translationError || 'Preparando bloques sintácticos para conservar el sentido…'
+        )}</span>`;
+        if (!translationError && !translationInflight.has(cacheKey)) preparePageTranslation(book);
+      }
+      let header = '';
+      if (state.currentPage === 0) {
+        const sourceLink = book.external?.sourceUrl
+          ? ` · <a href="${esc(book.external.sourceUrl)}" target="_blank" rel="noopener">${esc(book.external.license || 'Fuente original')}</a>`
+          : '';
+        header = `<div class="title">${esc(book.title)}</div><div class="source">${esc(book.source)} · Nivel ${book.level}${sourceLink}</div>`;
+      }
+      let parallel = '';
+      if (state.parallelOn) {
+        parallel = `<div class="parallel-box visible"><div class="label">Traducción al español</div><span id="parallel-text">Traduciendo…</span></div>`;
+      }
+      const isLast = state.currentPage >= state.pages.length - 1;
+      let endHtml = '';
+      if (isLast) {
+        endHtml = buildEndCard(book);
+      }
+      content.innerHTML = header + `<p>${page}</p>` + parallel + endHtml;
+      if (state.parallelOn) {
+        const pageAtRequest = state.currentPage;
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000));
+        Promise.race([getPageTranslation(rawPage, book.lang, cacheKey), timeout])
+          .then(t => {
+            if (state.currentPage !== pageAtRequest || !state.parallelOn) return;
+            const el = document.getElementById('parallel-text');
+            if (el) el.textContent = t || '—';
+          })
+          .catch(() => {
+            if (state.currentPage !== pageAtRequest || !state.parallelOn) return;
+            const el = document.getElementById('parallel-text');
+            if (el) el.textContent = '⚠️ Traducción no disponible. Revisa tu conexión o inténtalo de nuevo.';
+          });
+      }
+      document.getElementById('page-indicator').textContent = `${state.currentPage + 1} / ${state.pages.length}`;
+      document.getElementById('prev-page').classList.toggle('disabled', state.currentPage === 0);
+      // En la última página el botón › sigue activo para “cerrar” lectura
+      document.getElementById('next-page').classList.toggle('disabled', false);
+      const pct = state.pages.length ? Math.round(((state.currentPage + 1) / state.pages.length) * 100) : 0;
+      const fill = document.getElementById('page-progress-fill');
+      if (fill) fill.style.width = pct + '%';
+      hideXRay();
+
+      // Contar palabras solo la primera vez que se ve esta página
+      if (!state._seenPages) state._seenPages = new Set();
+      const key = (book?.id || 0) + '-' + state.currentPage;
+      if (!state._wordCountedPages) state._wordCountedPages = new Set();
+      if (!state._wordCountedPages.has(key)) {
+        state._wordCountedPages.add(key);
+        state.wordsRead += (rawPage.match(/\S+/g) || []).length;
+        saveState();
+      }
+      // Scroll al inicio de la página al cambiar
+      content.scrollTop = 0;
+    }
+
+    function buildEndCard(book) {
+      const similar = allBooks().filter(b =>
+        b.id !== book.id &&
+        b.tags.some(t => book.tags.includes(t)) &&
+        (state.profile === 'A' ? b.lang === 'fr' : state.profile === 'B' ? b.lang === 'en' : true)
+      ).slice(0, 3);
+      const more = similar.length
+        ? `<div class="more-like-row"><div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:0.2rem;">Más como este</div>` +
+           similar.map(b => {
+             const openAction = b.external ? `openBook('${esc(b.id)}')` : `openBook(${b.id})`;
+             return `
+            <div class="more-like-item" onclick="${openAction}">
+              <strong>${esc(b.title)}</strong>
+              <span>${esc(b.source)} · ${b.lang.toUpperCase()} · N${b.level}</span>
+            </div>`;
+           }).join('') + `</div>`
+        : '';
+      return `
+        <div class="end-card">
+          <h3>Lectura terminada</h3>
+          <p>Has llegado al final de «${esc(book.title)}».<br>
+          Ratio actual: <strong>${state.ratio}%</strong> de idioma meta.</p>
+          <div class="end-actions">
+            <button class="end-btn primary" onclick="finishReading()">Volver al feed</button>
+            <button class="end-btn ghost" onclick="saveToBoard()">📌 Guardar</button>
+            <button class="end-btn ghost" onclick="rereadFromStart()">Leer de nuevo</button>
+          </div>
+          ${more}
+        </div>`;
+    }
+
+    function finishReading() {
+      if (state.currentBook) {
+        if (!state._seenPages) state._seenPages = new Set();
+        const key = state.currentBook.id + '-done';
+        if (!state._seenPages.has(key)) {
+          state._seenPages.add(key);
+          state.pagesRead++;
+        }
+      }
+      saveState();
+      showToast('Lectura completada');
+      goToLibrary();
+    }
+
+    function rereadFromStart() {
+      state.currentPage = 0;
+      renderCurrentPage();
+      showToast('Desde el inicio');
+    }
+
+    function changePage(dir) {
+      if (state._ignoreNextPageTap) return;
+      if (isXRayOpen()) {
+        hideXRay();
+        return; // cerrar info no debe cambiar de página
+      }
+      const next = state.currentPage + dir;
+      // Al intentar avanzar desde la última página → completar lectura
+      // Solo si el usuario usa la flecha › o el tercio derecho a propósito
+      if (dir > 0 && state.currentPage >= state.pages.length - 1) {
+        finishReading();
+        return;
+      }
+      if (next < 0 || next >= state.pages.length) return;
+      state.currentPage = next;
+      if (!state._seenPages) state._seenPages = new Set();
+      const key = (state.currentBook?.id || 0) + '-' + next;
+      if (!state._seenPages.has(key)) {
+        state._seenPages.add(key);
+        state.pagesRead++;
+        saveState();
+      }
+      renderCurrentPage();
+      renderUserSummary();
+    }
+    function toggleParallel() {
+      state.parallelOn = !state.parallelOn;
+      document.getElementById('btn-parallel').classList.toggle('active', state.parallelOn);
+      renderCurrentPage();
+    }
+
+    // ===================== X-RAY =====================
+    function showXRay(e, el) {
+      e.stopPropagation();
+      e.preventDefault();
+      const popup = document.getElementById('xray-popup');
+      // original = forma en FR o EN (lo que se guarda / se aprende)
+      const original = el.dataset.original || '';
+      const es = el.dataset.es || '';
+      const en = el.dataset.en || '';
+      const wordLang = el.dataset.lang || (state.profile === 'B' ? 'en' : 'fr');
+      const freq = parseInt(el.dataset.freq || '50', 10);
+      const st = getWordStatus(original);
+      const stLabel = st === 'known' ? 'Conocida' : st === 'learning' ? 'Aprendiendo' : 'Nueva';
+      const freqLabel = freq > 70 ? 'Muy común' : freq > 45 ? 'Media' : 'Poco frecuente';
+      const ctx = el.dataset.context || '';
+      const langLabel = wordLang === 'en' ? 'Inglés' : 'Francés';
+      const isSpanishInline = el.classList.contains('scaffold-es');
+      popup.dataset.translation = es || '';
+      popup.dataset.original = original;
+
+      let html = `<div class="xray-word">${esc(original)}</div>`;
+      if (isSpanishInline) {
+        html += `<div class="xray-row"><span class="xray-label">En el texto</span><span>Español (apoyo)</span></div>`;
+      }
+      html += `<div class="xray-row"><span class="xray-label">${esc(langLabel)}</span><span>${esc(original)}</span></div>`;
+      html += `<div class="xray-row"><span class="xray-label">Español</span><span data-live-es>${esc(es || 'Traduciendo…')}</span></div>`;
+      if (wordLang === 'fr' && en && state.profile === 'C') {
+        html += `<div class="xray-row"><span class="xray-label">English</span><span>${esc(en)}</span></div>`;
+      }
+      html += `<div class="xray-row"><span class="xray-label">Estado</span><span>${esc(stLabel)}</span></div>`;
+      html += `<div class="xray-actions">
+        <button class="xray-btn primary" data-action="save">Guardar ${esc(langLabel.toLowerCase())}</button>
+        <button class="xray-btn" data-action="known">Ya la sé</button>
+      </div>`;
+      html += `<div class="xray-freq">Frecuencia
+        <div class="freq-bar"><div class="freq-fill" style="width:${Math.max(0, Math.min(100, freq))}%"></div></div>
+        <div style="margin-top:0.2rem;font-size:0.72rem;">${esc(freqLabel)}</div>
+      </div>`;
+      popup.innerHTML = html;
+      popup.classList.add('visible');
+
+      const btnSave = popup.querySelector('[data-action="save"]');
+      const btnKnown = popup.querySelector('[data-action="known"]');
+      if (btnSave && !es) btnSave.disabled = true;
+      if (btnSave) btnSave.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        saveWord(original, popup.dataset.translation || '', ctx);
+      });
+      if (btnKnown) btnKnown.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        markWord(original, 'known');
+        hideXRay();
+        showToast(`«${original}» marcada como conocida`);
+      });
+
+      const rect = el.getBoundingClientRect();
+      let left = Math.max(12, Math.min(rect.left + rect.width / 2 - 140, window.innerWidth - 290));
+      let top = rect.bottom + 8;
+      if (top + 220 > window.innerHeight) top = rect.top - 230;
+      popup.style.left = left + 'px';
+      popup.style.top = top + 'px';
+
+      if (!es) {
+        translateWordInContext(original, ctx, wordLang).then(translated => {
+          if (!translated || !isXRayOpen() || popup.dataset.original !== original) return;
+          popup.dataset.translation = translated;
+          const live = popup.querySelector('[data-live-es]');
+          if (live) live.textContent = translated;
+          if (btnSave) btnSave.disabled = false;
+        }).catch(() => {
+          const live = popup.querySelector('[data-live-es]');
+          if (live) live.textContent = 'No disponible ahora';
+        });
+      }
+    }
+    function isXRayOpen() {
+      return document.getElementById('xray-popup')?.classList.contains('visible');
+    }
+    function hideXRay() {
+      const popup = document.getElementById('xray-popup');
+      if (popup && popup.classList.contains('visible')) {
+        popup.classList.remove('visible');
+        // Evitar que el mismo clic cierre el popup Y cambie de página / salga de la lectura
+        state._ignoreNextPageTap = true;
+        setTimeout(() => { state._ignoreNextPageTap = false; }, 120);
+      }
+    }
+    function saveWord(word, trans, context) {
+      // word = forma en FR o EN (idioma meta); trans = español de apoyo
+      markWord(word, 'learning', context, trans);
+      hideXRay();
+      const lang = state.profile === 'B' ? 'inglés' : 'francés';
+      showToast(`«${word}» (${lang}) guardada · ES: ${trans || '—'}`);
+    }
+    document.addEventListener('click', e => {
+      if (!isXRayOpen()) return;
+      if (e.target.closest('.scaffold') || e.target.closest('.scaffold-es') || e.target.closest('.xray-popup')) return;
+      hideXRay();
+    });
+    // Hide X-Ray on scroll inside the page
+    document.getElementById('page-content')?.addEventListener('scroll', () => {
+      if (isXRayOpen()) hideXRay();
+    }, { passive: true });
+
+    // ===================== RATIO =====================
+    function adjustRatio(delta) {
+      const prev = state.ratio;
+      const next = snapRatio(state.ratio + delta);
+      if (next === prev) {
+        showToast(delta > 0 ? '100% idioma que aprendes' : '100% español de apoyo');
+        return;
+      }
+      state.ratio = next;
+      updateRatioUI();
+      saveState();
+      const msg = delta > 0
+        ? (next >= 100 ? '100% idioma que aprendes' : `Más idioma meta: ${prev}% → ${next}%`)
+        : (next <= 0 ? 'Máximo apoyo en español (0% L2)' : `Más español: ${prev}% → ${next}%`);
+      showToast(msg);
+      if (state.currentBook) {
+        const book = state.currentBook;
+        processBook(book);
+        renderCurrentPage();
+        if (next < 100) preparePageTranslation(book);
+      }
+    }
+    function updateRatioFromSlider(val) {
+      state.ratio = snapRatio(val);
+      updateRatioUI();
+      saveState();
+      if (state.currentBook) {
+        const book = state.currentBook;
+        processBook(book);
+        renderCurrentPage();
+        if (state.ratio < 100) preparePageTranslation(book);
+      }
+    }
+    function updateRatioUI() {
+      const r = snapRatio(state.ratio);
+      state.ratio = r;
+      const level = getMixLevel(r);
+      let fr = 0, en = 0, es = 100 - r;
+      if (state.profile === 'A') { fr = r; }
+      else if (state.profile === 'B') { en = r; }
+      else { fr = Math.round(r * 0.72); en = Math.round(r * 0.28); }
+      const barFr = document.getElementById('bar-fr');
+      if (barFr) barFr.style.width = fr + '%';
+      const barEn = document.getElementById('bar-en');
+      if (barEn) barEn.style.width = en + '%';
+      const barEs = document.getElementById('bar-es');
+      if (barEs) barEs.style.width = es + '%';
+      const ratioVal = document.getElementById('ratio-value');
+      if (ratioVal) ratioVal.textContent = r + '%';
+      const slider = document.getElementById('ratio-slider');
+      if (slider) slider.value = r;
+      const sv = document.getElementById('slider-value');
+      if (sv) sv.textContent = r;
+      const se = document.getElementById('slider-es-value');
+      if (se) se.textContent = 100 - r;
+      const levelLabel = document.getElementById('slider-level-label');
+      if (levelLabel) levelLabel.textContent = `Nivel validado: ${level.label}`;
+    }
+
+    // ===================== THEME / FONT / SETTINGS =====================
+    function setTheme(t) {
+      state.theme = t;
+      document.body.dataset.theme = t;
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+      if (typeof saveState === 'function') saveState();
+    }
+    function changeFontSize(d) {
+      state.fontSize = Math.max(14, Math.min(28, state.fontSize+d*2));
+      document.documentElement.style.setProperty('--font-size', state.fontSize+'px');
+      saveState();
+    }
+    function changeFont(v) {
+      state.fontFamily = v;
+      document.getElementById('page-content').style.fontFamily = v;
+      saveState();
+    }
+    function openSettings(){ document.getElementById('overlay').classList.add('visible'); document.getElementById('settings-panel').classList.add('open'); }
+    function closeSettings(){ document.getElementById('overlay').classList.remove('visible'); document.getElementById('settings-panel').classList.remove('open'); }
+    function showToast(msg) {
+      const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2600);
+    }
+    document.addEventListener('keydown', e => {
+      const inReader = document.getElementById('screen-reader').classList.contains('active');
+      if (!inReader) return;
+      if (e.key === 'ArrowLeft' || (e.key === ' ' && e.shiftKey)) {
+        e.preventDefault(); changePage(-1);
+      } else if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault(); changePage(1);
+      } else if (e.key === 'Escape') {
+        hideXRay();
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault(); adjustRatio(-10);
+      } else if (e.key === '+' || e.key === '=') {
+        e.preventDefault(); adjustRatio(10);
+      }
+    });
+
+    // Toque tipo Kindle: tercio izquierdo = atrás, derecho = adelante
+    document.getElementById('page-content')?.addEventListener('click', (e) => {
+      if (state._ignoreNextPageTap) return;
+      if (isXRayOpen()) return; // el cierre del popup se gestiona en capture
+      if (e.target.closest('.scaffold') || e.target.closest('.scaffold-es') ||
+          e.target.closest('.end-card') || e.target.closest('.more-like-item') ||
+          e.target.closest('button') || e.target.closest('.xray-popup')) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const third = rect.width / 3;
+      if (x < third) changePage(-1);
+      else if (x > third * 2) changePage(1);
+    });
+
+    // Restore saved state on load
+    (function init() {
+      const restored = loadState();
+      if (restored && state.profile) {
+        document.body.dataset.theme = state.theme || 'light';
+        document.documentElement.style.setProperty('--font-size', (state.fontSize || 18) + 'px');
+        document.getElementById('page-content').style.fontFamily = state.fontFamily;
+        updateProfilePill();
+        renderUserSummary();
+        renderBooks();
+        renderBoards();
+        renderVocab();
+        renderStats();
+        updateRatioUI();
+        showMain('library');
+        showToast('Sesión restaurada');
+      } else {
+        updateRatioUI();
+      }
+    })();
+  </script>
+</body>
+</html>
