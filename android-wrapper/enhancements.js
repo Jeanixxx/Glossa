@@ -174,7 +174,8 @@
       state.externalBooks = state.externalBooks || [];
       state.externalBooks.unshift(book);
       if (typeof window.saveState === 'function') window.saveState();
-      input.value = book.title;
+      var searchInput = document.getElementById('glossa-library-query');
+      if (searchInput) searchInput.value = book.title;
       if (typeof window.renderBooks === 'function') window.renderBooks();
       if (window.showToast) window.showToast('«' + book.title + '» se añadió a tu biblioteca');
     } catch (error) {
