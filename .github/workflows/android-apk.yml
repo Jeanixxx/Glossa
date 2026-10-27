@@ -44,6 +44,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Check JavaScript syntax
+        run: node --check enhancements.js
+
       - name: Build web assets
         run: npm run build
 
