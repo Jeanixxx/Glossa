@@ -9,9 +9,9 @@ let html = await readFile(sourceHtml, 'utf8');
 const enhancementTag = '<script src="./enhancements.js"></script>';
 const bridgeTag = '<script type="module" src="./native-bridge.js"></script>';
 if (!html.includes(enhancementTag)) {
-  html = html.replace('</body>', `  ${enhancementTag}\\n  ${bridgeTag}\\n</body>`);
+  html = html.replace('</body>', `  ${enhancementTag}\n  ${bridgeTag}\n</body>`);
 } else if (!html.includes(bridgeTag)) {
-  html = html.replace('</body>', `  ${bridgeTag}\\n</body>`);
+  html = html.replace('</body>', `  ${bridgeTag}\n</body>`);
 }
 await writeFile(targetHtml, html, 'utf8');
 console.log('Prepared Glóssa web assets for Capacitor.');
