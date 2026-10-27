@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const root = resolve(process.cwd(), '..');
@@ -13,5 +13,8 @@ if (!html.includes(enhancementTag)) {
 } else if (!html.includes(bridgeTag)) {
   html = html.replace('</body>', `  ${bridgeTag}\n</body>`);
 }
+const publicDir = resolve(process.cwd(), 'public');
+await mkdir(publicDir, { recursive: true });
+await copyFile(resolve(process.cwd(), 'enhancements.js'), resolve(publicDir, 'enhancements.js'));
 await writeFile(targetHtml, html, 'utf8');
 console.log('Prepared Glóssa web assets for Capacitor.');
