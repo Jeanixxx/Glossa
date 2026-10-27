@@ -90,6 +90,7 @@
     '.glossa-search-row input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:.65rem 0}',
     '.glossa-search-row button{border:0;border-radius:10px;background:var(--accent);color:white;padding:.6rem .7rem;font-weight:700}',
     '.glossa-search-meta{display:flex;justify-content:space-between;gap:.5rem;margin-top:.55rem;color:var(--muted);font-size:.75rem}.glossa-search-meta button{border:0;background:transparent;color:var(--accent);font-weight:600}',
+    '.glossa-import-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}.glossa-import-row label{font-size:.75rem;color:var(--muted)}.glossa-import-row select{max-width:130px;border:1px solid var(--border-soft);border-radius:9px;padding:.45rem;background:var(--bg);color:var(--text)}.glossa-import-row button{border:1px solid var(--border-soft);border-radius:9px;background:var(--highlight);color:var(--text);padding:.5rem .65rem;font-size:.78rem;font-weight:600}',
     '.glossa-offline{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;padding:.65rem .8rem;border:1px solid var(--border);border-radius:13px;background:var(--card);font-size:.78rem;color:var(--muted)}',
     '.glossa-offline i{width:9px;height:9px;border-radius:50%;background:#38a169;flex:none}.glossa-offline.offline i{background:#d97706}',
     '.glossa-streak{position:relative;overflow:hidden;padding:1.05rem;border-radius:20px;color:#fff;background:linear-gradient(125deg,#3d6b8c,#6c79a8 62%,#c4784a);margin-bottom:1rem;box-shadow:0 12px 28px rgba(61,107,140,.2)}',
@@ -109,7 +110,7 @@
     var panel = document.createElement('section');
     panel.className = 'glossa-search';
     panel.id = 'glossa-search-panel';
-    panel.innerHTML = '<h3>¿Qué te gustaría leer hoy?</h3><p>Busca por título, tema, fuente o idioma.</p><div class="glossa-search-row"><span aria-hidden="true">⌕</span><input id="glossa-library-query" type="search" autocomplete="off" aria-label="Buscar lecturas" placeholder="Ciencia, historia, francés…"><button type="button" id="glossa-explore-search">Explorar</button></div><div class="glossa-search-meta"><span id="glossa-search-count">Tu biblioteca</span><button type="button" id="glossa-search-clear">Limpiar</button></div>';
+    panel.innerHTML = '<h3>¿Qué te gustaría leer hoy?</h3><p>Busca por título, tema, fuente o idioma.</p><div class="glossa-search-row"><span aria-hidden="true">⌕</span><input id="glossa-library-query" type="search" autocomplete="off" aria-label="Buscar lecturas" placeholder="Ciencia, historia, francés…"><button type="button" id="glossa-explore-search">Explorar</button></div><div class="glossa-search-meta"><span id="glossa-search-count">Tu biblioteca</span><button type="button" id="glossa-search-clear">Limpiar</button></div><div class="glossa-import-row"><label for="glossa-import-language">Idioma:</label><select id="glossa-import-language"><option value="fr">Francés</option><option value="en">Inglés</option><option value="es">Español</option></select><button type="button" id="glossa-import-txt">＋ Importar .txt</button><input id="glossa-import-file" type="file" accept=".txt,text/plain" hidden></div>';
     grid.parentNode.insertBefore(panel, grid);
     var offline = document.createElement('div');
     offline.className = 'glossa-offline';
@@ -135,8 +136,53 @@
       if (input.value.trim() && typeof window.searchOpenLibrary === 'function') window.searchOpenLibrary();
       else if (externalInput) externalInput.focus();
     });
+    var fileInput = document.getElementById('glossa-import-file');
+    document.getElementById('glossa-import-txt').addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', importTextFile);
     updateOfflineStatus();
   }
+  async function importTextFile(event) {
+    var file = event.target.files && event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    if (file.size > 1000000) {
+      if (window.showToast) window.showToast('El archivo supera 1 MB. Elige un TXT más pequeño.');
+      return;
+    }
+    try {
+      var text = (await file.text()).replace(/^\uFEFF/, '').replace(/\r/g, '').trim();
+      var words = text.match(/\S+/g) || [];
+      if (words.length < 10) {
+        if (window.showToast) window.showToast('El texto es demasiado corto. Importa al menos 10 palabras.');
+        return;
+      }
+      var language = document.getElementById('glossa-import-language').value || 'fr';
+      var id = 'local-' + Date.now();
+      var book = {
+        id: id,
+        title: file.name.replace(/\.txt$/i, '').replace(/[_-]+/g, ' ').slice(0, 100) || 'Texto importado',
+        source: 'Archivo local',
+        level: 3,
+        lang: language,
+        tags: state.interests && state.interests.length ? state.interests.slice() : ['culture','history'],
+        emoji: '📄',
+        raw: text,
+        external: { provider: 'local', license: 'Archivo importado por el usuario', lengthLabel: words.length.toLocaleString('es-MX') + ' palabras' }
+      };
+      if (typeof window.writeExternalCache === 'function') await window.writeExternalCache(id, text);
+      else throw new Error('No está disponible el almacenamiento local de lecturas');
+      state.externalBooks = state.externalBooks || [];
+      state.externalBooks.unshift(book);
+      if (typeof window.saveState === 'function') window.saveState();
+      input.value = book.title;
+      if (typeof window.renderBooks === 'function') window.renderBooks();
+      if (window.showToast) window.showToast('«' + book.title + '» se añadió a tu biblioteca');
+    } catch (error) {
+      console.warn('No se pudo importar el TXT:', error);
+      if (window.showToast) window.showToast('No se pudo importar el archivo. Comprueba el formato e inténtalo de nuevo.');
+    }
+  }
+
   function filterRenderedBooks(query) {
     var grid = document.getElementById('book-grid');
     if (!grid) return;
