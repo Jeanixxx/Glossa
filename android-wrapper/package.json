@@ -1,0 +1,22 @@
+{
+  "name": "glossa-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android wrapper and APK build pipeline for Glóssa",
+  "scripts": {
+    "prepare:web": "node scripts/prepare-web.mjs",
+    "build": "npm run prepare:web && vite build",
+    "android:sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/haptics": "^7.0.2",
+    "@capacitor/share": "^7.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "vite": "^6.4.1",
+    "typescript": "^5.8.3"
+  }
+}
