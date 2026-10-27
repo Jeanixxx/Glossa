@@ -20,10 +20,16 @@ El APK de depuración queda en `android/app/build/outputs/apk/debug/app-debug.ap
 
 ## Funciones integradas
 
+- **Biblioteca y búsqueda:** filtro local por título, fuente, idioma y tema, con acceso a búsqueda de bibliotecas públicas.
+- **Cuaderno de lectura:** crea, edita y elimina notas vinculadas a libros; las notas se conservan en el almacenamiento local del dispositivo.
+- **Racha de lectura:** registra los días de actividad, la racha actual, el récord personal y una vista semanal.
+- **Modo sin conexión:** el progreso, vocabulario y notas se conservan localmente; los libros externos descargados y las traducciones ya preparadas pueden reutilizarse sin red. La búsqueda de nuevas lecturas y las traducciones no guardadas requieren conexión.
 - **Compartir lectura:** abre el selector nativo de compartir Android.
 - **Lectura en voz alta:** utiliza Speech Synthesis del WebView y las voces instaladas en Android.
 - **Respuesta háptica:** usa el plugin de vibración/háptica de Capacitor al pulsar acciones.
 - **Diseño adaptable a zonas seguras:** respeta el inset inferior del dispositivo.
+
+El archivo `enhancements.js` se copia a los activos públicos de Vite durante la preparación web y añade las funciones conectadas a la interfaz existente.
 
 ## Permisos y privacidad
 
