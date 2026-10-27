@@ -308,6 +308,10 @@
       '<label for="glossa-note-book">Relacionar con una lectura</label><select id="glossa-note-book"><option value="">Nota general (sin lectura)</option></select>' +
       '<button class="btn-primary" id="glossa-note-save" type="submit" style="margin-top:.8rem">Guardar en mi cuaderno</button></form>' +
       '<div class="section-label">Mis notas <span id="glossa-notes-count"></span></div><div id="glossa-notes-list"></div></div>';
+    var nav = document.createElement('div');
+    nav.className = 'bottom-nav';
+    nav.innerHTML = '<div class="nav-item" onclick="showMain(\'library\')"><span>📖</span>Feed</div><div class="nav-item" onclick="showMain(\'boards\')"><span>📌</span>Tableros</div><div class="nav-item" onclick="showMain(\'vocab\')"><span>🔤</span>Vocabulario</div><div class="nav-item" onclick="showMain(\'stats\')"><span>📊</span>Progreso</div>';
+    screen.appendChild(nav);
     var statsScreen = document.getElementById('screen-stats');
     if (statsScreen && statsScreen.parentNode) statsScreen.parentNode.insertBefore(screen, statsScreen.nextSibling);
     document.getElementById('glossa-note-form').addEventListener('submit', function (event) { event.preventDefault(); saveNotebookNote(); });
