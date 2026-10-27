@@ -118,14 +118,13 @@
     panel.parentNode.insertBefore(offline, panel);
     var input = document.getElementById('glossa-library-query');
     input.addEventListener('input', function () {
-      filterRenderedBooks(input.value);
-      if (originalRenderBooks) originalRenderBooks();
-      filterRenderedBooks(input.value);
+      if (typeof window.renderBooks === 'function') window.renderBooks();
+      else filterRenderedBooks(input.value);
     });
     document.getElementById('glossa-search-clear').addEventListener('click', function () {
       input.value = '';
-      if (originalRenderBooks) originalRenderBooks();
-      filterRenderedBooks('');
+      if (typeof window.renderBooks === 'function') window.renderBooks();
+      else filterRenderedBooks('');
       input.focus();
     });
     document.getElementById('glossa-explore-search').addEventListener('click', function () {
@@ -340,13 +339,26 @@
   if (typeof originalSaveState === 'function') {
     window.saveState = function () { originalSaveState.apply(this, arguments); persistEnhancementData(); };
   }
+  function renderBooksWithSearch() {
+    var input = document.getElementById('glossa-library-query');
+    var query = input ? input.value.trim() : '';
+    var oldProfile = state.profile, oldLevel = state.level, oldInterests = state.interests;
+    if (query) {
+      state.profile = 'C';
+      state.level = 'C1';
+      state.interests = [];
+    }
+    try { if (typeof originalRenderBooks === 'function') originalRenderBooks(); }
+    finally {
+      state.profile = oldProfile;
+      state.level = oldLevel;
+      state.interests = oldInterests;
+    }
+    if (input) filterRenderedBooks(query);
+    updateOfflineStatus();
+  }
   if (typeof originalRenderBooks === 'function') {
-    window.renderBooks = function () {
-      originalRenderBooks.apply(this, arguments);
-      var input = document.getElementById('glossa-library-query');
-      if (input) filterRenderedBooks(input.value);
-      updateOfflineStatus();
-    };
+    window.renderBooks = function () { renderBooksWithSearch(); };
   }
   if (typeof originalRenderCurrentPage === 'function') {
     window.renderCurrentPage = function () {
