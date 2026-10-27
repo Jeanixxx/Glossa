@@ -143,9 +143,14 @@
     if (!grid) return;
     var q = String(query || '').trim().toLocaleLowerCase();
     var cards = Array.from(grid.querySelectorAll('.book-card'));
+    var books = allKnownBooks();
     var visible = 0;
     cards.forEach(function (card) {
-      var matches = !q || card.textContent.toLocaleLowerCase().indexOf(q) >= 0;
+      var button = card.querySelector('[data-download-book]');
+      var id = button ? button.getAttribute('data-download-book') : '';
+      var book = books.find(function (item) { return String(item.id) === String(id); });
+      var haystack = book ? [book.title, book.source, book.lang, (book.tags || []).join(' '), book.level].join(' ') : card.textContent;
+      var matches = !q || haystack.toLocaleLowerCase().indexOf(q) >= 0;
       card.style.display = matches ? '' : 'none';
       if (matches) visible++;
     });
