@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#e8eef5" />
+  <meta name="theme-color" content="#0c0c0e" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Glóssa — Lectura inmersiva con seguimiento</title>
@@ -1648,7 +1648,8 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       if (handleAppBack()) event.preventDefault();
     }, false);
     window.Capacitor?.Plugins?.App?.addListener?.('backButton', () => {
-      handleAppBack();
+      // Si no hay nada que cerrar dentro de la app (estamos en la biblioteca), se sale.
+      if (!handleAppBack()) window.Capacitor?.Plugins?.App?.exitApp?.();
     });
 
     // ===================== LIBRARY / FEED =====================

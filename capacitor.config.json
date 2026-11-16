@@ -1,0 +1,8 @@
+{
+  "appId": "app.glossa.reader",
+  "appName": "Glóssa",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0c0c0e"
+  }
+}
