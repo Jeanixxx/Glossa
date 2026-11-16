@@ -49,18 +49,16 @@
       --shadow: 0 8px 32px rgba(90, 70, 40, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
     }
     [data-theme="dark"] {
-      --bg: #0f1218;
-      --bg-grad: radial-gradient(ellipse at 15% 0%, #1a2840 0%, transparent 50%),
-                 radial-gradient(ellipse at 85% 90%, #2a1a30 0%, transparent 45%),
-                 linear-gradient(165deg, #12161e 0%, #0e1118 100%);
-      --text: #e6eaf0; --muted: #8b95a8;
-      --accent: #6ba3c7; --accent-hover: #8bb8d4;
-      --card: rgba(30, 36, 48, 0.55); --card-solid: rgba(28, 34, 46, 0.75);
-      --border: rgba(255, 255, 255, 0.08); --border-soft: rgba(255, 255, 255, 0.06);
-      --highlight: rgba(107, 163, 199, 0.12);
-      --scaffold: #e09a6a; --scaffold-bg: rgba(224, 154, 106, 0.15);
-      --known: #5cb88a; --learning: #e09a6a;
-      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+      --bg: #0c0c0e;
+      --bg-grad: linear-gradient(180deg, #0e0e10 0%, #0a0a0b 100%);
+      --text: #ececec; --muted: #8a8a90;
+      --accent: #d9c9a8; --accent-hover: #e8dbc0;
+      --card: rgba(27, 27, 32, 0.7); --card-solid: rgba(27, 27, 32, 0.95);
+      --border: rgba(255, 255, 255, 0.07); --border-soft: rgba(255, 255, 255, 0.06);
+      --highlight: rgba(217, 201, 168, 0.1);
+      --scaffold: #d9c9a8; --scaffold-bg: rgba(217, 201, 168, 0.12);
+      --known: #9fbf9a; --learning: #d9c9a8;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
@@ -78,6 +76,21 @@
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
     }
+    /* Práctica con personaje (IA) */
+    .practice-header { padding: 3.2rem 1rem 0.9rem; display: flex; align-items: center; gap: 0.8rem; border-bottom: 1px solid var(--border-soft); }
+    .practice-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--card-solid); color: var(--accent); font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none; }
+    .practice-who { flex: 1; min-width: 0; }
+    .practice-name { font-size: 1rem; font-weight: 600; }
+    .practice-sub { font-size: 0.74rem; color: var(--muted); }
+    .practice-log { flex: 1; overflow-y: auto; padding: 1.1rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+    .practice-bubble { max-width: 82%; padding: 0.6rem 0.9rem; border-radius: 18px; font-size: 1rem; line-height: 1.5; }
+    .practice-bubble.persona { align-self: flex-start; background: var(--card-solid); border-bottom-left-radius: 4px; }
+    .practice-bubble.user { align-self: flex-end; background: var(--accent); color: #15130e; border-bottom-right-radius: 4px; }
+    .practice-bubble .scaffold-es { color: var(--muted); }
+    .practice-note { align-self: center; font-size: 0.72rem; color: var(--muted); }
+    .practice-bar { padding: 0.7rem 0.8rem calc(0.9rem + env(safe-area-inset-bottom, 0px)); display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid var(--border-soft); }
+    .practice-bar input { flex: 1; min-width: 0; padding: 0.7rem 1rem; border-radius: 22px; border: 1px solid var(--border); background: var(--card-solid); color: var(--text); font: inherit; font-size: 1rem; }
+    .practice-bar input:focus { outline: 1px solid var(--accent); }
     .screen { display: none; min-height: 100dvh; flex-direction: column; }
     .screen.active { display: flex; }
 
@@ -561,7 +574,7 @@
     [data-theme="dark"] ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); }
   </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
   <!-- ONBOARDING -->
   <div id="screen-welcome" class="screen active onboard">
@@ -630,6 +643,7 @@
       <div class="library-title">Glóssa</div>
       <div class="header-actions">
         <span class="profile-pill" id="current-profile-pill">—</span>
+        <button class="extra-btn" onclick="openPractice()">Práctica</button>
         <button class="icon-btn" onclick="openSettings()">⚙</button>
       </div>
     </header>
@@ -775,9 +789,9 @@
       <div class="ratio-ends"><span>100% español</span><span>100% idioma meta</span></div>
       <div class="footer-actions">
         <div class="theme-btns">
-          <div class="theme-btn active" data-t="light" onclick="setTheme('light')"></div>
+          <div class="theme-btn" data-t="light" onclick="setTheme('light')"></div>
           <div class="theme-btn" data-t="sepia" onclick="setTheme('sepia')"></div>
-          <div class="theme-btn" data-t="dark" onclick="setTheme('dark')"></div>
+          <div class="theme-btn active" data-t="dark" onclick="setTheme('dark')"></div>
         </div>
         <div class="reader-extra-btns">
           <button class="extra-btn" id="btn-parallel" onclick="toggleParallel()">Traducción ES</button>
@@ -787,6 +801,22 @@
           <button onclick="changeFontSize(1)">A+</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="screen-practice" class="screen">
+    <div class="practice-header">
+      <button class="back-btn" onclick="goToLibrary()">←</button>
+      <div class="practice-avatar" id="practice-avatar">L</div>
+      <div class="practice-who">
+        <div class="practice-name" id="practice-name">Lucas</div>
+        <div class="practice-sub">IA de práctica · <span id="practice-ratio">70</span> % inglés</div>
+      </div>
+    </div>
+    <div class="practice-log" id="practice-log"></div>
+    <div class="practice-bar">
+      <input id="practice-input" type="text" placeholder="Escribe en inglés" autocomplete="off" onkeydown="if(event.key==='Enter')sendPractice()">
+      <button class="btn-primary" style="width:auto;padding:0.7rem 1rem;font:inherit;font-size:0.95rem;" onclick="sendPractice()">Enviar</button>
     </div>
   </div>
 
@@ -804,6 +834,15 @@
       <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-top:0.25rem;"><span>Solo español</span><span>Solo L2</span></div>
     </div>
     <div class="setting-group">
+      <label>Personaje de práctica (IA)</label>
+      <input id="persona-name" type="text" maxlength="20" placeholder="Nombre" onchange="setPersona()" style="width:100%;padding:0.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-bottom:0.5rem;">
+      <select id="persona-gender" onchange="setPersona()" style="width:100%;padding:0.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
+        <option value="m">Hombre</option>
+        <option value="f">Mujer</option>
+        <option value="n">Neutro</option>
+      </select>
+    </div>
+    <div class="setting-group">
       <label>Fuente</label>
       <select id="font-select" onchange="changeFont(this.value)" style="width:100%;padding:0.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
         <option value="'Literata', Georgia, serif">Literata</option>
@@ -818,9 +857,10 @@
   <script>
     // ===================== STATE =====================
     const state = {
-      profile: null, level: null, ratio: 40, interests: [],
+      profile: null, level: null, ratio: 70, interests: [],
+      persona: { name: 'Lucas', gender: 'm' }, practice: null,
       currentBook: null, currentPage: 0, pages: [], rawPages: [], parallelOn: false,
-      theme: 'light', fontSize: 18, fontFamily: "'Literata', Georgia, serif",
+      theme: 'dark', fontSize: 18, fontFamily: "'Literata', Georgia, serif",
       words: {},
       boards: [ { id: 1, name: 'Guardados', items: [] } ],
       wordsRead: 0, pagesRead: 0,
@@ -974,6 +1014,7 @@
           theme: state.theme,
           fontSize: state.fontSize,
           fontFamily: state.fontFamily,
+          persona: state.persona,
            pageTranslations: state._pageTranslations,
            chunkTranslations: state._chunkTranslations,
            engineVersion: state._engineVersion,
@@ -998,6 +1039,7 @@
         if (data.theme) state.theme = data.theme;
         if (typeof data.fontSize === 'number') state.fontSize = data.fontSize;
         if (data.fontFamily) state.fontFamily = data.fontFamily;
+        if (data.persona && typeof data.persona.name === 'string') state.persona = { name: data.persona.name.slice(0, 20) || 'Lucas', gender: ['m','f','n'].includes(data.persona.gender) ? data.persona.gender : 'm' };
         if (data.pageTranslations && typeof data.pageTranslations === 'object') {
           state._pageTranslations = data.pageTranslations;
         }
@@ -1499,6 +1541,84 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       }
     }
     function goToLibrary() { showMain('library'); }
+
+    // ===================== PRÁCTICA CON PERSONAJE (IA) =====================
+    // Mensajes casuales y concretos, sin apoyo emocional. Se muestran con el motor de mezcla.
+    const PRACTICE_BANK = [
+      "My cat knocked my coffee off the table again.",
+      "I tried the new ramen place by the station. Way overrated.",
+      "Be honest, did you watch the match last night?",
+      "Did you finally fix that bike chain or are you still stuck?",
+      "The mug survived, but the coffee did not.",
+      "Nice, that sounds like a good plan for the weekend."
+    ];
+    const PRACTICE_LANG = 'en';
+
+    function updatePersonaUI() {
+      const p = state.persona || { name: 'Lucas', gender: 'm' };
+      const name = document.getElementById('practice-name');
+      if (name) name.textContent = p.name;
+      const avatar = document.getElementById('practice-avatar');
+      if (avatar) avatar.textContent = (p.name || '?').charAt(0).toUpperCase();
+      const input = document.getElementById('persona-name');
+      if (input) input.value = p.name;
+      const gender = document.getElementById('persona-gender');
+      if (gender) gender.value = p.gender;
+    }
+    function setPersona() {
+      const name = (document.getElementById('persona-name')?.value || '').trim().slice(0, 20) || 'Lucas';
+      const genderValue = document.getElementById('persona-gender')?.value;
+      const gender = ['m', 'f', 'n'].includes(genderValue) ? genderValue : 'm';
+      state.persona = { name, gender };
+      updatePersonaUI();
+      saveState();
+    }
+    function openPractice() {
+      hideAllScreens();
+      document.getElementById('screen-practice')?.classList.add('active');
+      if (!state.practice) state.practice = { log: [], next: 0 };
+      document.getElementById('practice-ratio').textContent = state.ratio;
+      updatePersonaUI();
+      renderPracticeLog();
+      if (!state.practice.log.length) sendPersonaLine();
+    }
+    function renderPracticeLog() {
+      const log = document.getElementById('practice-log');
+      if (!log) return;
+      log.innerHTML = '';
+      (state.practice?.log || []).forEach(item => {
+        const bubble = document.createElement('div');
+        bubble.className = 'practice-bubble ' + item.from;
+        if (item.html) bubble.innerHTML = item.html; else bubble.textContent = item.text;
+        log.appendChild(bubble);
+      });
+      log.scrollTop = log.scrollHeight;
+    }
+    async function sendPersonaLine() {
+      const text = PRACTICE_BANK[state.practice.next % PRACTICE_BANK.length];
+      state.practice.next++;
+      const item = { from: 'persona', text, html: '' };
+      state.practice.log.push(item);
+      renderPracticeLog();
+      try {
+        const spanish = await googleTranslate(text, 'es', PRACTICE_LANG);
+        const model = await buildValidatedSentence(text, spanish, PRACTICE_LANG);
+        item.html = renderValidatedSentence(model, getMixLevel(state.ratio), PRACTICE_LANG);
+      } catch (error) {
+        console.warn('Sin traducción para el personaje, se muestra en inglés:', error);
+      }
+      renderPracticeLog();
+    }
+    function sendPractice() {
+      const input = document.getElementById('practice-input');
+      const text = (input?.value || '').trim();
+      if (!text) return;
+      if (!state.practice) state.practice = { log: [], next: 0 };
+      state.practice.log.push({ from: 'user', text });
+      input.value = '';
+      renderPracticeLog();
+      setTimeout(sendPersonaLine, 900);
+    }
     function showScreen(name) {
       hideAllScreens();
       const el = document.getElementById('screen-' + name);
@@ -1511,6 +1631,10 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       }
       if (isXRayOpen()) {
         hideXRay();
+        return true;
+      }
+      if (document.getElementById('screen-practice')?.classList.contains('active')) {
+        goToLibrary();
         return true;
       }
       if (document.getElementById('screen-reader')?.classList.contains('active')) {
@@ -2982,8 +3106,9 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
     // Restore saved state on load
     (function init() {
       const restored = loadState();
+      updatePersonaUI();
       if (restored && state.profile) {
-        document.body.dataset.theme = state.theme || 'light';
+        document.body.dataset.theme = state.theme || 'dark';
         document.documentElement.style.setProperty('--font-size', (state.fontSize || 18) + 'px');
         document.getElementById('page-content').style.fontFamily = state.fontFamily;
         updateProfilePill();
