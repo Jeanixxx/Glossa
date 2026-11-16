@@ -91,6 +91,12 @@
     .practice-bar { padding: 0.7rem 0.8rem calc(0.9rem + env(safe-area-inset-bottom, 0px)); display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid var(--border-soft); }
     .practice-bar input { flex: 1; min-width: 0; padding: 0.7rem 1rem; border-radius: 22px; border: 1px solid var(--border); background: var(--card-solid); color: var(--text); font: inherit; font-size: 1rem; }
     .practice-bar input:focus { outline: 1px solid var(--accent); }
+    .consent-sheet { position: fixed; inset: 0; z-index: 400; background: rgba(0, 0, 0, 0.6); display: flex; align-items: flex-end; justify-content: center; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); }
+    .consent-sheet[hidden] { display: none; }
+    .consent-card { width: 100%; max-width: 420px; background: var(--card-solid); border: 1px solid var(--border); border-radius: 20px; padding: 1.3rem 1.2rem 1.1rem; box-shadow: var(--shadow); }
+    .consent-card h3 { font-size: 1.1rem; margin-bottom: 0.6rem; text-wrap: balance; }
+    .consent-card p { font-size: 0.92rem; line-height: 1.5; color: var(--text); margin-bottom: 0.6rem; }
+    .consent-card .consent-hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
     .screen { display: none; min-height: 100dvh; flex-direction: column; }
     .screen.active { display: flex; }
 
@@ -144,6 +150,8 @@
       padding: 0.92rem 2rem; font-size: 1.02rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
       width: 100%; max-width: 420px;
     }
+    /* El acento claro del tema oscuro necesita texto oscuro para leerse bien. */
+    [data-theme="dark"] .btn-primary { color: #15130e; }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-ghost { background: transparent; border: none; color: var(--muted); font-size: 0.88rem; margin-top: 0.8rem; cursor: pointer; padding: 0.35rem; }
@@ -810,13 +818,23 @@
       <div class="practice-avatar" id="practice-avatar">L</div>
       <div class="practice-who">
         <div class="practice-name" id="practice-name">Lucas</div>
-        <div class="practice-sub">IA de práctica · <span id="practice-ratio">70</span> % inglés</div>
+        <div class="practice-sub">IA de práctica · <span id="practice-ratio">70 % inglés</span></div>
       </div>
     </div>
     <div class="practice-log" id="practice-log"></div>
     <div class="practice-bar">
       <input id="practice-input" type="text" placeholder="Escribe en inglés" autocomplete="off" onkeydown="if(event.key==='Enter')sendPractice()">
-      <button class="btn-primary" style="width:auto;padding:0.7rem 1rem;font:inherit;font-size:0.95rem;" onclick="sendPractice()">Enviar</button>
+      <button class="btn-primary" style="width:auto;margin-top:0;padding:0.7rem 1rem;font:inherit;font-size:0.95rem;font-weight:600;" onclick="sendPractice()">Enviar</button>
+    </div>
+  </div>
+
+  <div class="consent-sheet" id="lockscreen-ask" hidden>
+    <div class="consent-card" role="dialog" aria-modal="true" aria-labelledby="lockscreen-ask-title">
+      <h3 id="lockscreen-ask-title">¿Mostrar mensajes en la pantalla de bloqueo?</h3>
+      <p><strong id="lockscreen-ask-name">Lucas</strong>, tu personaje de práctica (IA), te escribirá algunas veces al día en el idioma que aprendes. Los mensajes aparecen en la barra de notificaciones y en la pantalla de bloqueo, y puedes responder desde ahí.</p>
+      <p class="consent-hint">Puedes cambiarlo cuando quieras en Ajustes.</p>
+      <button class="btn-primary" onclick="answerLockscreen(true)">Sí, activar</button>
+      <button class="btn-ghost" style="width:100%;margin-top:0.5rem;" onclick="answerLockscreen(false)">Ahora no</button>
     </div>
   </div>
 
@@ -843,6 +861,18 @@
       </select>
     </div>
     <div class="setting-group">
+      <label>Idioma que aprendes</label>
+      <select id="target-lang" onchange="setTargetLang(this.value)" style="width:100%;padding:0.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
+        <option value="auto">Automático (el del último libro)</option>
+        <option value="en">Inglés</option>
+        <option value="fr">Francés</option>
+      </select>
+      <label for="lockscreen-toggle" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.8rem;color:var(--text);font-size:0.86rem;">
+        <input type="checkbox" id="lockscreen-toggle" onchange="toggleLockscreen(this.checked)">
+        Mensajes en la barra y la pantalla de bloqueo
+      </label>
+    </div>
+    <div class="setting-group">
       <label>Fuente</label>
       <select id="font-select" onchange="changeFont(this.value)" style="width:100%;padding:0.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
         <option value="'Literata', Georgia, serif">Literata</option>
@@ -859,6 +889,7 @@
     const state = {
       profile: null, level: null, ratio: 70, interests: [],
       persona: { name: 'Lucas', gender: 'm' }, practice: null,
+      targetLang: null, lastBookLang: null, lockscreen: { asked: false, on: false, followUp: 0 },
       currentBook: null, currentPage: 0, pages: [], rawPages: [], parallelOn: false,
       theme: 'dark', fontSize: 18, fontFamily: "'Literata', Georgia, serif",
       words: {},
@@ -1015,6 +1046,10 @@
           fontSize: state.fontSize,
           fontFamily: state.fontFamily,
           persona: state.persona,
+          targetLang: state.targetLang,
+          lastBookLang: state.lastBookLang,
+          lockscreen: state.lockscreen,
+          practice: state.practice,
            pageTranslations: state._pageTranslations,
            chunkTranslations: state._chunkTranslations,
            engineVersion: state._engineVersion,
@@ -1040,6 +1075,18 @@
         if (typeof data.fontSize === 'number') state.fontSize = data.fontSize;
         if (data.fontFamily) state.fontFamily = data.fontFamily;
         if (data.persona && typeof data.persona.name === 'string') state.persona = { name: data.persona.name.slice(0, 20) || 'Lucas', gender: ['m','f','n'].includes(data.persona.gender) ? data.persona.gender : 'm' };
+        if (data.targetLang === 'en' || data.targetLang === 'fr') state.targetLang = data.targetLang;
+        if (data.lastBookLang === 'en' || data.lastBookLang === 'fr') state.lastBookLang = data.lastBookLang;
+        if (data.lockscreen && typeof data.lockscreen === 'object') {
+          state.lockscreen = { asked: !!data.lockscreen.asked, on: !!data.lockscreen.on, followUp: Number(data.lockscreen.followUp) || 0 };
+        }
+        if (data.practice && Array.isArray(data.practice.log)) {
+          state.practice = {
+            lang: data.practice.lang === 'fr' ? 'fr' : 'en',
+            log: data.practice.log.filter(item => item && typeof item.text === 'string').slice(-60),
+            next: Number(data.practice.next) || 0
+          };
+        }
         if (data.pageTranslations && typeof data.pageTranslations === 'object') {
           state._pageTranslations = data.pageTranslations;
         }
@@ -1515,10 +1562,11 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       saveState();
       showMain('library');
       showToast('Tu Glóssa está listo');
+      maybeAskLockscreen();
     }
     function resetOnboarding() {
-      state.profile = null; state.level = null; state.interests = []; state.ratio = 40;
-      state.fontFamily = "'Literata', Georgia, serif"; state.fontSize = 18; state.theme = 'light';
+      state.profile = null; state.level = null; state.interests = []; state.ratio = 70;
+      state.fontFamily = "'Literata', Georgia, serif"; state.fontSize = 18; state.theme = 'dark';
       state.words = {}; state.boards = [{ id: 1, name: 'Guardados', items: [] }];
       state.wordsRead = 0; state.pagesRead = 0; state._seenPages = null;
        state._wordCountedPages = null; state._pageTranslations = {}; state._chunkTranslations = {};
@@ -1543,27 +1591,97 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
     function goToLibrary() { showMain('library'); }
 
     // ===================== PRÁCTICA CON PERSONAJE (IA) =====================
-    // Mensajes casuales y concretos, sin apoyo emocional. Se muestran con el motor de mezcla.
-    const PRACTICE_BANK = [
-      "My cat knocked my coffee off the table again.",
-      "I tried the new ramen place by the station. Way overrated.",
-      "Be honest, did you watch the match last night?",
-      "Did you finally fix that bike chain or are you still stuck?",
-      "The mug survived, but the coffee did not.",
-      "Nice, that sounds like a good plan for the weekend."
-    ];
-    const PRACTICE_LANG = 'en';
+    // Mensajes casuales y concretos, sin apoyo emocional. Se muestran con el motor de mezcla
+    // en el idioma que aprendes: el elegido en Ajustes o, en automático, el del último libro abierto.
+    const PRACTICE_BANK = {
+      en: [
+        "My cat knocked my coffee off the table again.",
+        "I tried the new ramen place by the station. Way overrated.",
+        "Be honest, did you watch the match last night?",
+        "Did you finally fix that bike chain or are you still stuck?",
+        "The mug survived, but the coffee did not.",
+        "Nice, that sounds like a good plan for the weekend.",
+        "I just found twenty euros in an old jacket.",
+        "The bus was late again, so I walked in the rain.",
+        "What are you reading these days? I need a new book."
+      ],
+      fr: [
+        "Mon chat a encore renversé mon café sur la table.",
+        "J'ai testé le nouveau restaurant de ramen près de la gare. Franchement surcoté.",
+        "Sois honnête, tu as regardé le match hier soir ?",
+        "Tu as enfin réparé la chaîne de ton vélo ou tu bloques encore ?",
+        "La tasse a survécu, mais pas le café.",
+        "Ça me semble un bon plan pour le week-end.",
+        "Je viens de trouver vingt euros dans une vieille veste.",
+        "Le bus était encore en retard, alors j'ai marché sous la pluie.",
+        "Tu lis quoi en ce moment ? Il me faut un nouveau livre."
+      ]
+    };
+    const LANG_NAMES = { en: 'inglés', fr: 'francés' };
+    const PRACTICE_LOG_MAX = 60;
+
+    function getTargetLang() {
+      const lang = state.targetLang || state.lastBookLang || 'en';
+      return PRACTICE_BANK[lang] ? lang : 'en';
+    }
+    // La conversación pertenece a un idioma: si cambias de idioma, empieza una nueva.
+    function ensurePractice() {
+      const lang = getTargetLang();
+      if (!state.practice || state.practice.lang !== lang) state.practice = { lang, log: [], next: 0 };
+      return state.practice;
+    }
+    function trimPracticeLog() {
+      if (state.practice?.log.length > PRACTICE_LOG_MAX) state.practice.log = state.practice.log.slice(-PRACTICE_LOG_MAX);
+    }
+    function nextPersonaSource() {
+      const practice = ensurePractice();
+      const bank = PRACTICE_BANK[practice.lang];
+      const text = bank[practice.next % bank.length];
+      practice.next++;
+      return text;
+    }
+    // Frase del personaje mezclada al ratio actual: html para el chat y texto plano para los avisos.
+    // Si no hay traducción validada, se muestra en el idioma meta (nunca una mezcla improvisada).
+    async function mixPersonaText(source, lang) {
+      try {
+        const spanish = await googleTranslate(source, 'es', lang);
+        const model = await buildValidatedSentence(source, spanish, lang);
+        const level = getMixLevel(state.ratio);
+        if (!model.valid || !model.levels?.[level.ratio]?.valid) return { html: '', plain: source };
+        const html = renderValidatedSentence(model, level, lang);
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        const plain = tmp.textContent
+          .replace(/\s+([.,!?;:])/g, '$1')
+          .replace(/([¿¡])\s+/g, '$1')
+          .replace(/\s+/g, ' ')
+          .trim();
+        return { html, plain: plain || source };
+      } catch (error) {
+        console.warn('Sin traducción para el personaje; se muestra en el idioma meta:', error);
+        return { html: '', plain: source };
+      }
+    }
 
     function updatePersonaUI() {
       const p = state.persona || { name: 'Lucas', gender: 'm' };
+      const lang = getTargetLang();
       const name = document.getElementById('practice-name');
       if (name) name.textContent = p.name;
       const avatar = document.getElementById('practice-avatar');
       if (avatar) avatar.textContent = (p.name || '?').charAt(0).toUpperCase();
+      const ratio = document.getElementById('practice-ratio');
+      if (ratio) ratio.textContent = `${state.ratio} % ${LANG_NAMES[lang]}`;
+      const field = document.getElementById('practice-input');
+      if (field) field.placeholder = `Escribe en ${LANG_NAMES[lang]}`;
       const input = document.getElementById('persona-name');
       if (input) input.value = p.name;
       const gender = document.getElementById('persona-gender');
       if (gender) gender.value = p.gender;
+      const langSelect = document.getElementById('target-lang');
+      if (langSelect) langSelect.value = state.targetLang || 'auto';
+      const toggle = document.getElementById('lockscreen-toggle');
+      if (toggle) toggle.checked = !!state.lockscreen?.on;
     }
     function setPersona() {
       const name = (document.getElementById('persona-name')?.value || '').trim().slice(0, 20) || 'Lucas';
@@ -1572,12 +1690,20 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       state.persona = { name, gender };
       updatePersonaUI();
       saveState();
+      reschedulePersonaSoon();
+    }
+    function setTargetLang(value) {
+      state.targetLang = value === 'en' || value === 'fr' ? value : null;
+      ensurePractice();
+      updatePersonaUI();
+      saveState();
+      reschedulePersonaSoon();
+      if (document.getElementById('screen-practice')?.classList.contains('active')) openPractice();
     }
     function openPractice() {
       hideAllScreens();
       document.getElementById('screen-practice')?.classList.add('active');
-      if (!state.practice) state.practice = { log: [], next: 0 };
-      document.getElementById('practice-ratio').textContent = state.ratio;
+      ensurePractice();
       updatePersonaUI();
       renderPracticeLog();
       if (!state.practice.log.length) sendPersonaLine();
@@ -1588,36 +1714,183 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       log.innerHTML = '';
       (state.practice?.log || []).forEach(item => {
         const bubble = document.createElement('div');
-        bubble.className = 'practice-bubble ' + item.from;
+        bubble.className = 'practice-bubble ' + (item.from === 'user' ? 'user' : 'persona');
         if (item.html) bubble.innerHTML = item.html; else bubble.textContent = item.text;
         log.appendChild(bubble);
       });
       log.scrollTop = log.scrollHeight;
     }
     async function sendPersonaLine() {
-      const text = PRACTICE_BANK[state.practice.next % PRACTICE_BANK.length];
-      state.practice.next++;
-      const item = { from: 'persona', text, html: '' };
-      state.practice.log.push(item);
+      const practice = ensurePractice();
+      const source = nextPersonaSource();
+      const item = { from: 'persona', text: source, html: '' };
+      practice.log.push(item);
       renderPracticeLog();
-      try {
-        const spanish = await googleTranslate(text, 'es', PRACTICE_LANG);
-        const model = await buildValidatedSentence(text, spanish, PRACTICE_LANG);
-        item.html = renderValidatedSentence(model, getMixLevel(state.ratio), PRACTICE_LANG);
-      } catch (error) {
-        console.warn('Sin traducción para el personaje, se muestra en inglés:', error);
-      }
+      const mixed = await mixPersonaText(source, practice.lang);
+      item.html = mixed.html;
+      item.text = mixed.plain;
+      trimPracticeLog();
+      saveState();
       renderPracticeLog();
     }
     function sendPractice() {
       const input = document.getElementById('practice-input');
       const text = (input?.value || '').trim();
       if (!text) return;
-      if (!state.practice) state.practice = { log: [], next: 0 };
-      state.practice.log.push({ from: 'user', text });
+      ensurePractice().log.push({ from: 'user', text: text.slice(0, 500) });
       input.value = '';
+      trimPracticeLog();
+      saveState();
       renderPracticeLog();
       setTimeout(sendPersonaLine, 900);
+    }
+
+    // ===================== AVISOS DEL PERSONAJE: BARRA Y PANTALLA DE BLOQUEO (Android) =====================
+    // Se programan en el propio teléfono (sin servidor): unos cuantos al día, a horas al azar.
+    const PERSONA_CHANNEL = 'persona';
+    const PERSONA_ACTION_TYPE = 'persona-reply';
+    const PERSONA_ID_BASE = 7000;          // 7000-7089: avisos del día · 7090-7099: respuestas rápidas
+    const PERSONA_PER_DAY = 4;
+    const PERSONA_DAYS = 2;
+    const PERSONA_HOURS = { start: 9, end: 21 };
+
+    function notifier() {
+      return window.Capacitor?.isNativePlatform?.() ? (window.Capacitor.Plugins?.LocalNotifications || null) : null;
+    }
+    async function preparePersonaNotifications() {
+      const LN = notifier();
+      if (!LN) return false;
+      const permission = await LN.requestPermissions();
+      if (permission?.display !== 'granted') return false;
+      // Visibilidad 1 = pública: el texto se ve en la pantalla de bloqueo.
+      await LN.createChannel({ id: PERSONA_CHANNEL, name: 'Personaje de práctica', description: 'Mensajes de práctica durante el día', importance: 4, visibility: 1 });
+      await LN.registerActionTypes({ types: [{ id: PERSONA_ACTION_TYPE, actions: [{ id: 'reply', title: 'Responder', input: true, inputButtonTitle: 'Enviar', inputPlaceholder: `Responde en ${LANG_NAMES[getTargetLang()]}` }] }] });
+      return true;
+    }
+    // Reparte los avisos del día en tramos y elige un momento al azar dentro de cada uno.
+    function personaSlots(now = new Date()) {
+      const slots = [];
+      const span = (PERSONA_HOURS.end - PERSONA_HOURS.start) * 60;
+      const step = span / PERSONA_PER_DAY;
+      for (let day = 0; day < PERSONA_DAYS; day++) {
+        for (let i = 0; i < PERSONA_PER_DAY; i++) {
+          const minutes = PERSONA_HOURS.start * 60 + Math.round(step * i + Math.random() * step * 0.8);
+          const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day, 0, minutes);
+          if (at.getTime() > now.getTime() + 10 * 60 * 1000) slots.push(at);
+        }
+      }
+      return slots;
+    }
+    async function personaNotification(id, at) {
+      const lang = getTargetLang();
+      const mixed = await mixPersonaText(nextPersonaSource(), lang);
+      return {
+        id,
+        title: `${state.persona.name} · IA de práctica`,
+        body: mixed.plain,
+        largeBody: mixed.plain,
+        channelId: PERSONA_CHANNEL,
+        actionTypeId: PERSONA_ACTION_TYPE,
+        schedule: { at, allowWhileIdle: true },
+        extra: { persona: true, lang, text: mixed.plain, html: mixed.html }
+      };
+    }
+    async function cancelPersonaNotifications(firstId = PERSONA_ID_BASE, lastId = PERSONA_ID_BASE + 89) {
+      const LN = notifier();
+      if (!LN) return;
+      const pending = await LN.getPending();
+      const ours = (pending?.notifications || []).filter(n => n.id >= firstId && n.id <= lastId);
+      if (ours.length) await LN.cancel({ notifications: ours.map(n => ({ id: n.id })) });
+    }
+    async function schedulePersonaNotifications() {
+      const LN = notifier();
+      if (!LN || !state.lockscreen.on) return;
+      try {
+        await cancelPersonaNotifications();
+        const slots = personaSlots();
+        const notifications = [];
+        for (let i = 0; i < slots.length; i++) notifications.push(await personaNotification(PERSONA_ID_BASE + i, slots[i]));
+        if (notifications.length) await LN.schedule({ notifications });
+        saveState();
+      } catch (error) {
+        console.warn('No se pudieron programar los mensajes del personaje:', error);
+      }
+    }
+    let personaRescheduleTimer = null;
+    function reschedulePersonaSoon() {
+      clearTimeout(personaRescheduleTimer);
+      personaRescheduleTimer = setTimeout(schedulePersonaNotifications, 1500);
+    }
+    // Tras responder desde la barra, el personaje vuelve a escribir en 1-3 minutos.
+    async function schedulePersonaFollowUp() {
+      const LN = notifier();
+      if (!LN || !state.lockscreen.on) return;
+      state.lockscreen.followUp = ((state.lockscreen.followUp || 0) + 1) % 10;
+      const at = new Date(Date.now() + (60 + Math.round(Math.random() * 120)) * 1000);
+      try {
+        await LN.schedule({ notifications: [await personaNotification(PERSONA_ID_BASE + 90 + state.lockscreen.followUp, at)] });
+        saveState();
+      } catch (error) {
+        console.warn('No se pudo programar la respuesta del personaje:', error);
+      }
+    }
+    function maybeAskLockscreen() {
+      if (!notifier() || state.lockscreen.asked || !state.profile) return;
+      document.getElementById('lockscreen-ask-name').textContent = state.persona.name;
+      document.getElementById('lockscreen-ask').hidden = false;
+    }
+    async function answerLockscreen(accept) {
+      document.getElementById('lockscreen-ask').hidden = true;
+      state.lockscreen.asked = true;
+      await setLockscreen(accept);
+    }
+    async function setLockscreen(on) {
+      if (on) {
+        const ready = await preparePersonaNotifications().catch(() => false);
+        state.lockscreen.on = !!ready;
+        if (ready) {
+          await schedulePersonaNotifications();
+          showToast(`${state.persona.name} te escribirá durante el día`);
+        } else {
+          showToast('Activa las notificaciones de Glóssa en los ajustes de Android');
+        }
+      } else {
+        state.lockscreen.on = false;
+        await cancelPersonaNotifications(PERSONA_ID_BASE, PERSONA_ID_BASE + 99).catch(() => {});
+      }
+      updatePersonaUI();
+      saveState();
+    }
+    function toggleLockscreen(checked) {
+      if (!notifier()) {
+        showToast('Los mensajes en la pantalla de bloqueo funcionan en la app de Android');
+        updatePersonaUI();
+        return;
+      }
+      setLockscreen(checked);
+    }
+    // Tocar el aviso o responder desde la barra: el mensaje y tu respuesta quedan en el chat.
+    function registerPersonaListeners() {
+      const LN = notifier();
+      if (!LN) return;
+      LN.addListener('localNotificationActionPerformed', event => {
+        const extra = event?.notification?.extra || {};
+        if (!extra.persona) return;
+        const practice = ensurePractice();
+        practice.log.push({
+          from: 'persona',
+          text: extra.text || event.notification.body || '',
+          html: extra.lang === practice.lang ? (extra.html || '') : ''
+        });
+        const reply = String(event.inputValue || '').trim().slice(0, 500);
+        if (event.actionId === 'reply' && reply) {
+          practice.log.push({ from: 'user', text: reply });
+          schedulePersonaFollowUp();
+        }
+        trimPracticeLog();
+        saveState();
+        if (state.profile) openPractice();
+      });
     }
     function showScreen(name) {
       hideAllScreens();
@@ -1631,6 +1904,10 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       }
       if (isXRayOpen()) {
         hideXRay();
+        return true;
+      }
+      if (!document.getElementById('lockscreen-ask')?.hidden) {
+        answerLockscreen(false);
         return true;
       }
       if (document.getElementById('screen-practice')?.classList.contains('active')) {
@@ -1724,6 +2001,11 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
     }
     async function openBook(id) {
       const book = findBook(id); if (!book) return;
+      // En modo automático, el personaje sigue el idioma del último libro que abres.
+      if ((book.lang === 'en' || book.lang === 'fr') && book.lang !== state.lastBookLang) {
+        state.lastBookLang = book.lang;
+        if (!state.targetLang) { updatePersonaUI(); reschedulePersonaSoon(); }
+      }
       if (!book.raw && book.external) {
         try {
           await hydrateExternalBook(book);
@@ -3124,6 +3406,12 @@ Mistakes will happen. Missing one day is normal; missing two becomes a pattern. 
       } else {
         updateRatioUI();
       }
+      // Avisos del personaje (solo en la app de Android).
+      registerPersonaListeners();
+      if (state.lockscreen.on) {
+        preparePersonaNotifications().then(ok => { if (ok) schedulePersonaNotifications(); }).catch(() => {});
+      }
+      maybeAskLockscreen();
     })();
   </script>
 </body>
